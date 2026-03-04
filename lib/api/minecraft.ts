@@ -1,0 +1,583 @@
+import { getAdminToken } from "./hooks";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
+const isApiAvailable = () => {
+  return true;
+};
+
+const DEFAULT_SERVER_TYPES = [
+  {
+    server_type: "vanilla",
+    display_name: "Vanilla",
+    description: "Minecraft vanilla server - hech qanday modifikatsiyasiz",
+    is_active: true,
+  },
+  {
+    server_type: "paper",
+    display_name: "Paper",
+    description:
+      "Yuqori unumdorlikdagi Spigot fork, plugin qo'llab-quvvatlashi bilan",
+    is_active: true,
+  },
+  {
+    server_type: "spigot",
+    display_name: "Spigot",
+    description: "Plugin qo'llab-quvvatlashi bilan CraftBukkit fork",
+    is_active: true,
+  },
+  {
+    server_type: "purpur",
+    display_name: "Purpur",
+    description: "Paper fork ko'proq konfiguratsiya imkoniyatlari bilan",
+    is_active: true,
+  },
+  {
+    server_type: "fabric",
+    display_name: "Fabric",
+    description: "Zamonaviy yengil modloader",
+    is_active: true,
+  },
+  {
+    server_type: "forge",
+    display_name: "Forge",
+    description: "Mashhur mod loader - katta mod kutubxonasi",
+    is_active: true,
+  },
+  {
+    server_type: "neoforge",
+    display_name: "NeoForge",
+    description: "Forge ning yangilangan forki",
+    is_active: true,
+  },
+];
+
+async function fetchWithAuth<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
+  if (!isApiAvailable()) {
+    if (endpoint.includes("/mods")) return [] as T;
+    if (endpoint.includes("/files")) return [] as T;
+    if (endpoint.includes("/server-types")) return [] as T;
+    if (
+      endpoint.includes("/servers/") &&
+      !endpoint.includes("/mods") &&
+      !endpoint.includes("/files")
+    ) {
+      const serverId = endpoint.split("/servers/")[1]?.split("/")[0];
+      return {
+        id: serverId,
+        name: "Demo Server",
+        status: "stopped",
+        server_type: "vanilla",
+        minecraft_version: "1.20.4",
+        max_players: 20,
+        port: 25565,
+        memory: 2048,
+        created_at: new Date().toISOString(),
+        online_players: 0,
+      } as T;
+    }
+    if (endpoint.includes("/servers")) return [] as T;
+    return {} as T;
+  }
+
+  const token = getAdminToken();
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Token ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch (error) {
+    console.warn(`API not reachable: ${endpoint}`);
+    if (endpoint.includes("/mods")) return [] as T;
+    if (endpoint.includes("/files")) return [] as T;
+    if (endpoint.includes("/servers")) return [] as T;
+    return {} as T;
+  }
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Unknown error" }));
+
+    if (typeof error === "object" && !error.error && !error.detail) {
+      const errorMessages = Object.entries(error)
+        .map(([key, value]) => {
+          if (Array.isArray(value)) return `${key}: ${value.join(", ")}`;
+          return `${key}: ${value}`;
+        })
+        .join("; ");
+      throw new Error(
+        errorMessages || `HTTP error! status: ${response.status}`,
+      );
+    }
+
+    throw new Error(
+      error.error || error.detail || `HTTP error! status: ${response.status}`,
+    );
+  }
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  return response.json();
+}
+
+export const minecraftAPI = {
+  getServerTypes: (activeOnly = true) =>
+    fetchWithAuth<import("./types").ServerTypeConfig[]>(
+      `/minecraft/server-types/?active_only=${activeOnly}`,
+    ),
+
+  getServerType: (serverType: string) =>
+    fetchWithAuth<import("./types").ServerTypeConfigDetail>(
+      `/minecraft/server-types/${serverType}/`,
+    ),
+
+  createServerType: (data: import("./types").CreateServerTypeConfigRequest) =>
+    fetchWithAuth<import("./types").ServerTypeConfigDetail>(
+      "/minecraft/server-types/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  updateServerType: (
+    serverType: string,
+    data: Partial<import("./types").CreateServerTypeConfigRequest>,
+  ) =>
+    fetchWithAuth<import("./types").ServerTypeConfigDetail>(
+      `/minecraft/server-types/${serverType}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  deleteServerType: (serverType: string) =>
+    fetchWithAuth<void>(`/minecraft/server-types/${serverType}/`, {
+      method: "DELETE",
+    }),
+
+  getServerJars: () =>
+    fetchWithAuth<import("./types").ServerJar[]>("/minecraft/jars/"),
+
+  uploadServerJar: async (
+    file: File,
+    data: {
+      name: string;
+      server_type: string;
+      minecraft_version: string;
+      is_default?: boolean;
+    },
+  ) => {
+    const token = getAdminToken();
+
+    if (!token) {
+      throw new Error("Avtorizatsiya tokeni topilmadi");
+    }
+
+    console.log(
+      "[v0] uploadServerJar - Sending request to:",
+      `${API_BASE_URL}/minecraft/jars/`,
+    );
+    console.log("[v0] uploadServerJar - File:", file.name, file.size);
+    console.log("[v0] uploadServerJar - Data:", data);
+
+    const formData = new FormData();
+    formData.append("jar_file", file);
+    formData.append("name", data.name);
+    formData.append("server_type", data.server_type);
+    formData.append("minecraft_version", data.minecraft_version);
+    if (data.is_default !== undefined) {
+      formData.append("is_default", String(data.is_default));
+    }
+
+    const response = await fetch(`${API_BASE_URL}/minecraft/jars/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+      body: formData,
+    });
+
+    console.log("[v0] uploadServerJar - Response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log("[v0] uploadServerJar - Error response:", errorText);
+      let error: any = {};
+
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      if (typeof error === "object" && !error.error && !error.detail) {
+        const errorMessages = Object.entries(error)
+          .map(([key, value]) => {
+            if (Array.isArray(value)) return `${key}: ${value.join(", ")}`;
+            return `${key}: ${value}`;
+          })
+          .join("; ");
+        throw new Error(errorMessages || "JAR yuklashda xato");
+      }
+
+      throw new Error(error.error || error.detail || "JAR yuklashda xato");
+    }
+
+    const result = await response.json();
+    console.log("[v0] uploadServerJar - Success response:", result);
+    return result as import("./types").ServerJar;
+  },
+
+  deleteServerJar: (jarId: string) =>
+    fetchWithAuth<void>(`/minecraft/jars/${jarId}/`, {
+      method: "DELETE",
+    }),
+
+  getServers: () =>
+    fetchWithAuth<import("./types").MinecraftServer[]>("/minecraft/servers/"),
+  getServer: (serverId: string) =>
+    fetchWithAuth<import("./types").MinecraftServerDetail>(
+      `/minecraft/servers/${serverId}/`,
+    ),
+
+  createServer: (data: import("./types").CreateServerRequest) =>
+    fetchWithAuth<import("./types").MinecraftServerDetail>(
+      "/minecraft/servers/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  updateServer: (
+    serverId: string,
+    data: Partial<import("./types").CreateServerRequest>,
+  ) =>
+    fetchWithAuth<import("./types").MinecraftServerDetail>(
+      `/minecraft/servers/${serverId}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  deleteServer: (serverId: string) =>
+    fetchWithAuth<void>(`/minecraft/servers/${serverId}/`, {
+      method: "DELETE",
+    }),
+
+  startServer: (serverId: string) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/start/`,
+      {
+        method: "POST",
+      },
+    ),
+
+  stopServer: (serverId: string) =>
+    fetchWithAuth<{ message: string }>(`/minecraft/servers/${serverId}/stop/`, {
+      method: "POST",
+    }),
+
+  restartServer: (serverId: string) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/restart/`,
+      {
+        method: "POST",
+      },
+    ),
+
+  killServer: (serverId: string) =>
+    fetchWithAuth<{ message: string }>(`/minecraft/servers/${serverId}/kill/`, {
+      method: "POST",
+    }),
+
+  installServer: (serverId: string) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/install/`,
+      {
+        method: "POST",
+      },
+    ),
+
+  sendCommand: (serverId: string, command: string) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/command/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ command }),
+      },
+    ),
+
+  getLogs: (serverId: string, limit = 100, sinceId?: number) =>
+    fetchWithAuth<import("./types").ServerLog[]>(
+      `/minecraft/servers/${serverId}/logs/?limit=${limit}${sinceId ? `&since_id=${sinceId}` : ""}`,
+    ),
+
+  getMods: (serverId: string) =>
+    fetchWithAuth<import("./types").ServerMod[]>(
+      `/minecraft/servers/${serverId}/mods/`,
+    ),
+
+  uploadMod: async (
+    serverId: string,
+    file: File,
+    name?: string,
+    version?: string,
+    description?: string,
+  ) => {
+    const token = getAdminToken();
+    const formData = new FormData();
+    formData.append("file", file);
+    if (name) formData.append("name", name);
+    if (version) formData.append("version", version);
+    if (description) formData.append("description", description);
+
+    const response = await fetch(
+      `${API_BASE_URL}/minecraft/servers/${serverId}/mods/`,
+      {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Token ${token}` } : {}),
+        },
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(error.error || "Failed to upload mod");
+    }
+
+    return response.json() as Promise<import("./types").ServerMod>;
+  },
+
+  toggleMod: (
+    serverId: string,
+    modId: number,
+    status: "enabled" | "disabled",
+  ) =>
+    fetchWithAuth<import("./types").ServerMod>(
+      `/minecraft/servers/${serverId}/mods/${modId}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      },
+    ),
+
+  deleteMod: (serverId: string, modId: number) =>
+    fetchWithAuth<void>(`/minecraft/servers/${serverId}/mods/${modId}/`, {
+      method: "DELETE",
+    }),
+
+  getFiles: (serverId: string, path = "") =>
+    fetchWithAuth<import("./types").ServerFile[]>(
+      `/minecraft/servers/${serverId}/files/?path=${encodeURIComponent(path)}`,
+    ),
+
+  getFileContent: (serverId: string, path: string) =>
+    fetchWithAuth<{ content: string }>(
+      `/minecraft/servers/${serverId}/files/?path=${encodeURIComponent(
+        path,
+      )}&content=true`,
+    ),
+
+  saveFile: (serverId: string, path: string, content: string) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/files/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ path, content }),
+      },
+    ),
+};
+
+export class ServerConsole {
+  private ws: WebSocket | null = null;
+  private serverId: string;
+  private onLog: (log: import("./types").ServerLog) => void;
+  private onStatus: (status: string) => void;
+  private onError: (error: string) => void;
+  private onInitialLogs?: (logs: import("./types").ServerLog[]) => void;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private isWebSocketAvailable = false;
+  private pollingInterval: NodeJS.Timeout | null = null;
+  private lastLogId = 0;
+
+  constructor(
+    serverId: string,
+    callbacks: {
+      onLog: (log: import("./types").ServerLog) => void;
+      onStatus: (status: string) => void;
+      onError: (error: string) => void;
+      onInitialLogs?: (logs: import("./types").ServerLog[]) => void;
+    },
+  ) {
+    this.serverId = serverId;
+    this.onLog = callbacks.onLog;
+    this.onStatus = callbacks.onStatus;
+    this.onError = callbacks.onError;
+    this.onInitialLogs = callbacks.onInitialLogs;
+    this.connect();
+  }
+
+  private connect() {
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    const token = getAdminToken();
+
+    if (!wsUrl || !token) {
+      this.isWebSocketAvailable = false;
+      this.startPolling();
+      return;
+    }
+
+    const fullWsUrl = `${wsUrl}/ws/server/${this.serverId}/console/?token=${token}`;
+
+    try {
+      this.ws = new WebSocket(fullWsUrl);
+      this.isWebSocketAvailable = true;
+    } catch {
+      this.isWebSocketAvailable = false;
+      this.startPolling();
+      return;
+    }
+
+    this.ws.onopen = () => {
+      this.reconnectAttempts = 0;
+      this.stopPolling();
+    };
+
+    this.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case "initial_logs":
+          if (this.onInitialLogs) {
+            this.onInitialLogs(data.logs);
+            if (data.logs.length > 0) {
+              this.lastLogId = Math.max(
+                ...data.logs.map((l: any) => l.id || 0),
+              );
+            }
+          }
+          break;
+        case "log":
+          this.onLog(data.log);
+          if (data.log.id) {
+            this.lastLogId = Math.max(this.lastLogId, data.log.id);
+          }
+          break;
+        case "status":
+        case "server_status":
+          this.onStatus(data.status);
+          break;
+        case "error":
+          this.onError(data.message);
+          break;
+      }
+    };
+
+    this.ws.onerror = () => {
+      this.isWebSocketAvailable = false;
+    };
+
+    this.ws.onclose = () => {
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        const delay = 2000 * this.reconnectAttempts;
+        setTimeout(() => this.connect(), delay);
+      } else {
+        this.startPolling();
+      }
+    };
+  }
+
+  private startPolling() {
+    if (this.pollingInterval) return;
+
+    this.loadInitialLogs();
+
+    this.pollingInterval = setInterval(() => {
+      this.pollLogs();
+    }, 2000);
+  }
+
+  private stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
+  private async loadInitialLogs() {
+    try {
+      const logs = await minecraftAPI.getLogs(this.serverId, 100);
+      if (this.onInitialLogs) {
+        this.onInitialLogs(logs);
+      }
+      if (logs.length > 0) {
+        this.lastLogId = Math.max(...logs.map((l) => l.id || 0));
+      }
+    } catch {}
+  }
+
+  private async pollLogs() {
+    try {
+      const logs = await minecraftAPI.getLogs(
+        this.serverId,
+        50,
+        this.lastLogId > 0 ? this.lastLogId : undefined,
+      );
+
+      for (const log of logs) {
+        this.onLog(log);
+        if (log.id) {
+          this.lastLogId = Math.max(this.lastLogId, log.id);
+        }
+      }
+    } catch (e) {}
+  }
+
+  sendCommand(command: string) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "command", command }));
+    } else {
+      minecraftAPI.sendCommand(this.serverId, command).catch((e) => {
+        this.onError(e.message || "Command yuborishda xato");
+      });
+    }
+  }
+
+  sendAction(action: "start" | "stop" | "restart") {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "action", action }));
+    }
+  }
+
+  disconnect() {
+    this.maxReconnectAttempts = 0;
+    this.stopPolling();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+}

@@ -1,0 +1,309 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --primary: #00f0ff;
+  --primary-dark: #00a8b3;
+  --secondary: #ff0060;
+  --accent: #00ff88;
+  --warning: #ffaa00;
+  --error: #ff4444;
+  --bg-dark: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-sidebar: #0d0d14;
+  --text-primary: #ffffff;
+  --text-secondary: #8888aa;
+  --border-color: #1a1a2e;
+  --glow-color: rgba(0, 240, 255, 0.3);
+
+  --background: #0a0a0f;
+  --foreground: #ffffff;
+  --card: #12121a;
+  --card-foreground: #ffffff;
+  --popover: #0d0d14;
+  --popover-foreground: #ffffff;
+  --muted: #1a1a2e;
+  --muted-foreground: #8888aa;
+  --border: #1a1a2e;
+  --input: #12121a;
+  --ring: #00f0ff;
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: "Segoe UI", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--bg-dark);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: #ffffff;
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--bg-dark);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--bg-sidebar);
+  --color-sidebar-foreground: var(--text-primary);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--bg-dark);
+  --color-sidebar-accent: var(--accent);
+  --color-sidebar-accent-foreground: var(--bg-dark);
+  --color-sidebar-border: var(--border-color);
+  --color-sidebar-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: var(--bg-dark);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.glitch {
+  position: relative;
+  text-shadow: 0 0 20px var(--glow-color);
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  animation: glitch-1 2s infinite linear alternate-reverse;
+  color: var(--secondary);
+  z-index: -1;
+}
+
+.glitch::after {
+  animation: glitch-2 3s infinite linear alternate-reverse;
+  color: var(--primary);
+  z-index: -2;
+}
+
+@keyframes glitch-1 {
+  0%,
+  100% {
+    clip-path: inset(0 0 95% 0);
+    transform: translate(-2px, 2px);
+  }
+  20% {
+    clip-path: inset(30% 0 60% 0);
+    transform: translate(2px, -2px);
+  }
+  40% {
+    clip-path: inset(60% 0 20% 0);
+    transform: translate(-2px, 2px);
+  }
+  60% {
+    clip-path: inset(80% 0 5% 0);
+    transform: translate(2px, -2px);
+  }
+  80% {
+    clip-path: inset(10% 0 80% 0);
+    transform: translate(-2px, 2px);
+  }
+}
+
+@keyframes glitch-2 {
+  0%,
+  100% {
+    clip-path: inset(95% 0 0 0);
+    transform: translate(2px, -2px);
+  }
+  20% {
+    clip-path: inset(60% 0 30% 0);
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    clip-path: inset(20% 0 60% 0);
+    transform: translate(2px, -2px);
+  }
+  60% {
+    clip-path: inset(5% 0 80% 0);
+    transform: translate(-2px, 2px);
+  }
+  80% {
+    clip-path: inset(80% 0 10% 0);
+    transform: translate(2px, -2px);
+  }
+}
+
+.neon-cyan {
+  text-shadow:
+    0 0 10px var(--primary),
+    0 0 20px var(--primary),
+    0 0 40px var(--primary);
+}
+
+.neon-pink {
+  text-shadow:
+    0 0 10px var(--secondary),
+    0 0 20px var(--secondary),
+    0 0 40px var(--secondary);
+}
+
+.neon-green {
+  text-shadow:
+    0 0 10px var(--accent),
+    0 0 20px var(--accent),
+    0 0 40px var(--accent);
+}
+
+.glow-box {
+  box-shadow:
+    0 0 20px var(--glow-color),
+    inset 0 0 20px rgba(0, 240, 255, 0.05);
+}
+
+.glow-box-pink {
+  box-shadow:
+    0 0 20px rgba(255, 0, 96, 0.3),
+    inset 0 0 20px rgba(255, 0, 96, 0.05);
+}
+
+.glass {
+  background: rgba(18, 18, 26, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+}
+
+.cyber-btn {
+  position: relative;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  color: var(--bg-dark);
+  font-weight: 700;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.cyber-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px var(--glow-color);
+}
+
+.cyber-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: translateX(-100%);
+}
+
+.cyber-btn:hover::before {
+  animation: shine 0.8s ease;
+}
+
+@keyframes shine {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--glow-color);
+  }
+  50% {
+    box-shadow:
+      0 0 40px var(--glow-color),
+      0 0 60px var(--glow-color);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.status-online {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.status-offline {
+  background: var(--error);
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.cyber-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.cyber-card:hover {
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
