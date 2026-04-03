@@ -322,6 +322,28 @@ class ApiClient {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   }
+
+  async googleLogin(idToken: string) {
+    return this.fetch<{
+      token: string;
+      user: import("./types").AdminUser;
+      is_new_user: boolean;
+    }>("/auth/google-login/", {
+      method: "POST",
+      body: JSON.stringify({ id_token: idToken }),
+    });
+  }
+
+  async telegramLogin(authData: any) {
+    return this.fetch<{
+      token: string;
+      user: import("./types").AdminUser;
+      is_new_user: boolean;
+    }>("/auth/telegram-login/", {
+      method: "POST",
+      body: JSON.stringify(authData),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

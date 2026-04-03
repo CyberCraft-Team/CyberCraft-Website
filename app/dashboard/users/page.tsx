@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Loader2,
@@ -25,6 +26,7 @@ import type { User } from "@/lib/api/types";
 export default function UsersPage() {
   const { users, isLoading, mutate } = useAdminUsers();
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const filteredUsers = users.filter(
     (user) =>
@@ -36,8 +38,7 @@ export default function UsersPage() {
     try {
       const token = getAdminToken();
       await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         }/admin/users/${userId}/whitelist/`,
         {
           method: "POST",
@@ -58,8 +59,7 @@ export default function UsersPage() {
     try {
       const token = getAdminToken();
       await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         }/admin/users/${userId}/operator/`,
         {
           method: "POST",
@@ -128,7 +128,8 @@ export default function UsersPage() {
                 {filteredUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-[var(--border-color)] hover:bg-[var(--bg-dark)]/50"
+                    className="border-b border-[var(--border-color)] hover:bg-[var(--bg-dark)]/50 cursor-pointer transition-colors"
+                    onClick={() => router.push(`/dashboard/users/${user.id}`)}
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">

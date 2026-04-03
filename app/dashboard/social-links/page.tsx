@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useAdminAuthContext } from "@/lib/admin-auth-context";
+import { getAdminToken } from "@/lib/api/hooks";
 import apiClient from "@/lib/api/client";
 import type { SocialLink } from "@/lib/api/types";
 import type { LucideIcon } from "lucide-react";
@@ -61,7 +61,7 @@ const emptyLink: Omit<SocialLink, "id"> = {
 };
 
 export default function SocialLinksPage() {
-    const { token } = useAdminAuthContext();
+    const token = getAdminToken();
     const [links, setLinks] = useState<SocialLink[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState<number | "new" | null>(null);

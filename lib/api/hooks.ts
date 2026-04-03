@@ -213,6 +213,20 @@ export function useUserAuth() {
     return response;
   };
 
+  const googleLogin = async (idToken: string) => {
+    const response = await apiClient.googleLogin(idToken);
+    setUserToken(response.token);
+    mutate({ user: response.user });
+    return response;
+  };
+
+  const telegramLogin = async (authData: any) => {
+    const response = await apiClient.telegramLogin(authData);
+    setUserToken(response.token);
+    mutate({ user: response.user });
+    return response;
+  };
+
   const logout = async () => {
     const currentToken = getUserToken();
     if (currentToken) {
@@ -238,6 +252,8 @@ export function useUserAuth() {
     isError: error,
     isAuthenticated: !!data?.user,
     login,
+    googleLogin,
+    telegramLogin,
     logout,
     refreshUser,
   };
@@ -347,7 +363,7 @@ export function useAdminServer(serverId: string) {
 
 export function useAdminNews() {
   const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<import("./types").News[]>(
+  const { data, error, isLoading, mutate } = useSWR<any>(
     token ? ["/admin/news/", token] : null,
     ([, authToken]) =>
       fetch(
@@ -366,8 +382,12 @@ export function useAdminNews() {
     },
   );
 
+  const news: import("./types").News[] = Array.isArray(data)
+    ? data
+    : data?.results || [];
+
   return {
-    news: data || [],
+    news,
     isLoading,
     isError: error,
     mutate,
@@ -376,7 +396,7 @@ export function useAdminNews() {
 
 export function useAdminUsers() {
   const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<import("./types").User[]>(
+  const { data, error, isLoading, mutate } = useSWR<any>(
     token ? ["/admin/users/", token] : null,
     ([, authToken]) =>
       fetch(
@@ -394,8 +414,12 @@ export function useAdminUsers() {
     },
   );
 
+  const users: import("./types").User[] = Array.isArray(data)
+    ? data
+    : data?.results || [];
+
   return {
-    users: data || [],
+    users,
     isLoading,
     isError: error,
     mutate,
@@ -404,9 +428,7 @@ export function useAdminUsers() {
 
 export function useAdminVotingSites() {
   const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<
-    import("./types").VotingSite[]
-  >(
+  const { data, error, isLoading, mutate } = useSWR<any>(
     token ? ["/admin/voting/sites/", token] : null,
     ([, authToken]) =>
       fetch(
@@ -424,8 +446,12 @@ export function useAdminVotingSites() {
     },
   );
 
+  const votingSites: import("./types").VotingSite[] = Array.isArray(data)
+    ? data
+    : data?.results || [];
+
   return {
-    votingSites: data || [],
+    votingSites,
     isLoading,
     isError: error,
     mutate,
@@ -434,7 +460,7 @@ export function useAdminVotingSites() {
 
 export function useAdminPublicServers() {
   const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<import("./types").Server[]>(
+  const { data, error, isLoading, mutate } = useSWR<any>(
     token ? ["/admin/servers/", token] : null,
     ([, authToken]) =>
       fetch(
@@ -452,8 +478,12 @@ export function useAdminPublicServers() {
     },
   );
 
+  const servers: import("./types").Server[] = Array.isArray(data)
+    ? data
+    : data?.results || [];
+
   return {
-    servers: data || [],
+    servers,
     isLoading,
     isError: error,
     mutate,

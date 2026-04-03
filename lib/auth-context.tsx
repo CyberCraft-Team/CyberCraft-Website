@@ -11,6 +11,8 @@ interface AuthContextType {
     isError: any;
     isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<any>;
+    googleLogin: (idToken: string) => Promise<any>;
+    telegramLogin: (authData: any) => Promise<any>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }

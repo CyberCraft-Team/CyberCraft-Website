@@ -3,6 +3,14 @@ import { getAdminToken } from "./hooks";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
+const WS_BASE_URL =
+  process.env.NEXT_PUBLIC_WS_URL ||
+  (API_BASE_URL.startsWith("http")
+    ? API_BASE_URL.replace(/^http/, "ws").replace(/\/api$/, "")
+    : typeof window !== "undefined"
+      ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
+      : "ws://localhost:8000");
+
 const isApiAvailable = () => {
   return true;
 };
@@ -233,7 +241,10 @@ export const minecraftAPI = {
       xhr.send(formData);
     });
 
-    console.log("[v0] uploadServerJar - Response status:", responsePayload.status);
+    console.log(
+      "[v0] uploadServerJar - Response status:",
+      responsePayload.status,
+    );
 
     if (!responsePayload.ok) {
       const errorText = responsePayload.text;
@@ -305,45 +316,47 @@ export const minecraftAPI = {
       formData.append("view_distance", String(data.view_distance));
     }
 
-    return new Promise<import("./types").MinecraftServerDetail>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_BASE_URL}/minecraft/servers/`);
-      xhr.setRequestHeader("Authorization", `Token ${token}`);
+    return new Promise<import("./types").MinecraftServerDetail>(
+      (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE_URL}/minecraft/servers/`);
+        xhr.setRequestHeader("Authorization", `Token ${token}`);
 
-      if (onProgress) {
-        xhr.upload.onprogress = (event) => {
-          if (!event.lengthComputable) return;
-          const percent = Math.round((event.loaded / event.total) * 100);
-          onProgress(percent);
+        if (onProgress) {
+          xhr.upload.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          };
+        }
+
+        xhr.onload = () => {
+          const responseText = xhr.responseText || "{}";
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(responseText));
+            return;
+          }
+          try {
+            const parsed = JSON.parse(responseText);
+            const message =
+              parsed.error ||
+              parsed.detail ||
+              Object.entries(parsed)
+                .map(([key, value]) =>
+                  Array.isArray(value)
+                    ? `${key}: ${value.join(", ")}`
+                    : `${key}: ${value}`,
+                )
+                .join("; ");
+            reject(new Error(message || `HTTP ${xhr.status}`));
+          } catch {
+            reject(new Error(responseText || `HTTP ${xhr.status}`));
+          }
         };
-      }
-
-      xhr.onload = () => {
-        const responseText = xhr.responseText || "{}";
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(responseText));
-          return;
-        }
-        try {
-          const parsed = JSON.parse(responseText);
-          const message =
-            parsed.error ||
-            parsed.detail ||
-            Object.entries(parsed)
-              .map(([key, value]) =>
-                Array.isArray(value)
-                  ? `${key}: ${value.join(", ")}`
-                  : `${key}: ${value}`,
-              )
-              .join("; ");
-          reject(new Error(message || `HTTP ${xhr.status}`));
-        } catch {
-          reject(new Error(responseText || `HTTP ${xhr.status}`));
-        }
-      };
-      xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
-      xhr.send(formData);
-    });
+        xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
+        xhr.send(formData);
+      },
+    );
   },
 
   deleteServerJar: (jarId: string) =>
@@ -543,7 +556,7 @@ export class ServerConsole {
   }
 
   private connect() {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    const wsUrl = WS_BASE_URL;
     const token = getAdminToken();
 
     if (!wsUrl || !token) {

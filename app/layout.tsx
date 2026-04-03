@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
@@ -45,7 +46,9 @@ export default function RootLayout({
         className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
       >
-        <AuthProvider>{children}</AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+          <AuthProvider>{children}</AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -9,6 +9,8 @@ import { Gamepad2, User, Lock, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
+import GoogleLoginButton from "@/components/auth/google-login-button";
+import TelegramLoginButton from "@/components/auth/telegram-login-button";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -118,6 +120,11 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <GoogleLoginButton />
+            <TelegramLoginButton />
+          </div>
 
           <div className="flex items-center justify-between mt-4">
             <Link

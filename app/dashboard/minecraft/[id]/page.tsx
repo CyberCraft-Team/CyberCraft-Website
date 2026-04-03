@@ -675,7 +675,7 @@ export default function ServerDetailPage({
                       ? "ONLINE"
                       : server.status === "stopped"
                         ? "OFFLINE"
-                        : server.status.toUpperCase()}
+                        : (server.status || "UNKNOWN").toUpperCase()}
                   </span>
                 </div>
               </div>

@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import apiClient from "@/lib/api/client";
+import GoogleLoginButton from "@/components/auth/google-login-button";
+import TelegramLoginButton from "@/components/auth/telegram-login-button";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -260,6 +262,11 @@ export default function RegisterPage() {
               )}
             </Button>
           </form>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <GoogleLoginButton />
+            <TelegramLoginButton />
+          </div>
 
           <p className="text-center text-[var(--text-secondary)] mt-6">
             Akkountingiz bormi?{" "}
