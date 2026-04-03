@@ -181,6 +181,7 @@ export const minecraftAPI = {
       minecraft_version: string;
       is_default?: boolean;
     },
+    onProgress?: (percent: number) => void,
   ) => {
     const token = getAdminToken();
 
@@ -204,25 +205,45 @@ export const minecraftAPI = {
       formData.append("is_default", String(data.is_default));
     }
 
-    const response = await fetch(`${API_BASE_URL}/minecraft/jars/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${token}`,
-      },
-      body: formData,
+    const responsePayload = await new Promise<{
+      status: number;
+      ok: boolean;
+      text: string;
+    }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_BASE_URL}/minecraft/jars/`);
+      xhr.setRequestHeader("Authorization", `Token ${token}`);
+
+      if (onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        };
+      }
+
+      xhr.onload = () => {
+        resolve({
+          status: xhr.status,
+          ok: xhr.status >= 200 && xhr.status < 300,
+          text: xhr.responseText || "",
+        });
+      };
+      xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
+      xhr.send(formData);
     });
 
-    console.log("[v0] uploadServerJar - Response status:", response.status);
+    console.log("[v0] uploadServerJar - Response status:", responsePayload.status);
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!responsePayload.ok) {
+      const errorText = responsePayload.text;
       console.log("[v0] uploadServerJar - Error response:", errorText);
       let error: any = {};
 
       try {
         error = JSON.parse(errorText);
       } catch {
-        throw new Error(errorText || `HTTP ${response.status}`);
+        throw new Error(errorText || `HTTP ${responsePayload.status}`);
       }
 
       if (typeof error === "object" && !error.error && !error.detail) {
@@ -238,9 +259,91 @@ export const minecraftAPI = {
       throw new Error(error.error || error.detail || "JAR yuklashda xato");
     }
 
-    const result = await response.json();
+    const result = JSON.parse(responsePayload.text);
     console.log("[v0] uploadServerJar - Success response:", result);
     return result as import("./types").ServerJar;
+  },
+
+  createServerWithArchive: async (
+    data: import("./types").CreateServerRequest & {
+      server_type?: string;
+      minecraft_version?: string;
+    },
+    archive: File,
+    onProgress?: (percent: number) => void,
+  ) => {
+    const token = getAdminToken();
+    if (!token) {
+      throw new Error("Avtorizatsiya tokeni topilmadi");
+    }
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("slug", data.slug);
+    formData.append("server_zip", archive);
+    formData.append("server_type", data.server_type ?? "custom");
+    if (data.minecraft_version) {
+      formData.append("minecraft_version", data.minecraft_version);
+    }
+    if (data.loader_version) {
+      formData.append("loader_version", data.loader_version);
+    }
+    formData.append("port", String(data.port));
+    formData.append("min_ram", String(data.min_ram));
+    formData.append("max_ram", String(data.max_ram));
+    formData.append("max_players", String(data.max_players));
+    formData.append("motd", data.motd);
+    formData.append("gamemode", data.gamemode);
+    formData.append("difficulty", data.difficulty);
+    formData.append("pvp", String(data.pvp));
+    formData.append("online_mode", String(data.online_mode));
+    formData.append("white_list", String(data.white_list));
+    if (data.spawn_protection != null) {
+      formData.append("spawn_protection", String(data.spawn_protection));
+    }
+    if (data.view_distance != null) {
+      formData.append("view_distance", String(data.view_distance));
+    }
+
+    return new Promise<import("./types").MinecraftServerDetail>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_BASE_URL}/minecraft/servers/`);
+      xhr.setRequestHeader("Authorization", `Token ${token}`);
+
+      if (onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        };
+      }
+
+      xhr.onload = () => {
+        const responseText = xhr.responseText || "{}";
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(responseText));
+          return;
+        }
+        try {
+          const parsed = JSON.parse(responseText);
+          const message =
+            parsed.error ||
+            parsed.detail ||
+            Object.entries(parsed)
+              .map(([key, value]) =>
+                Array.isArray(value)
+                  ? `${key}: ${value.join(", ")}`
+                  : `${key}: ${value}`,
+              )
+              .join("; ");
+          reject(new Error(message || `HTTP ${xhr.status}`));
+        } catch {
+          reject(new Error(responseText || `HTTP ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Tarmoq xatosi"));
+      xhr.send(formData);
+    });
   },
 
   deleteServerJar: (jarId: string) =>

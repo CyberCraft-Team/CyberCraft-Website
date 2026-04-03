@@ -3,10 +3,19 @@ export interface User {
   username: string;
   email: string;
   minecraft_uuid: string | null;
+  skin_face_url: string | null;
   is_whitelisted: boolean;
   is_operator: boolean;
   is_staff: boolean;
   is_superuser: boolean;
+  is_banned: boolean;
+  ban_reason: string;
+  banned_until: string | null;
+  is_email_verified: boolean;
+  cc_balance: number;
+  rank: string;
+  referral_code: string | null;
+  last_login: string | null;
   created_at: string;
 }
 
@@ -241,7 +250,9 @@ export interface CreateServerRequest {
   name: string;
   slug: string;
   server_jar: string;
+  server_type?: string;
   loader_version?: string | null;
+  minecraft_version?: string;
   port: number;
   min_ram: number;
   max_ram: number;
@@ -252,6 +263,8 @@ export interface CreateServerRequest {
   pvp: boolean;
   online_mode: boolean;
   white_list: boolean;
+  spawn_protection?: number;
+  view_distance?: number;
 }
 
 export interface ServerJar {

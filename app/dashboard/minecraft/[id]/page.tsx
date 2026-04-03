@@ -76,7 +76,12 @@ export default function ServerDetailPage({
 
     consoleRef.current = new ServerConsole(serverId, {
       onLog: (log) => {
-        setLogs((prev) => [...prev.slice(-500), log]);
+        setLogs((prev) => {
+          if (log.id && prev.some((item) => item.id === log.id)) {
+            return prev;
+          }
+          return [...prev.slice(-500), log];
+        });
       },
       onStatus: (status) => {
         setServer((prev) => (prev ? { ...prev, status: status as any } : prev));
@@ -704,7 +709,7 @@ export default function ServerDetailPage({
                   ) : (
                     logs.map((log, index) => (
                       <div
-                        key={log.id || index}
+                        key={`${log.id ?? "noid"}-${log.timestamp}-${index}`}
                         className={`flex items-start gap-2 py-1 px-2 rounded hover:bg-white/5 group ${getLogColor(log.level)}`}
                       >
                         <span className="text-gray-600 shrink-0 select-none text-xs leading-5">

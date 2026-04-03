@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { getAdminToken } from "@/lib/api/hooks";
 import useSWR from "swr";
 import { minecraftAPI } from "@/lib/api/minecraft";
@@ -87,7 +88,11 @@ export default function MinecraftServersPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [jarFile, setJarFile] = useState<File | null>(null);
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [archiveType, setArchiveType] = useState<"jar" | "zip">("jar");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const jarFileInputRef = useRef<HTMLInputElement>(null);
+  const zipFileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -121,8 +126,13 @@ export default function MinecraftServersPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!jarFile) {
+    if (archiveType === "jar" && !jarFile) {
       setErrorMessage("Iltimos, server JAR faylini yuklang");
+      return;
+    }
+
+    if (archiveType === "zip" && !zipFile) {
+      setErrorMessage("Iltimos, server ZIP faylini yuklang");
       return;
     }
 
@@ -147,6 +157,7 @@ export default function MinecraftServersPage() {
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
 
     try {
       const token = getAdminToken();
@@ -155,38 +166,64 @@ export default function MinecraftServersPage() {
         throw new Error("Avtorizatsiya tokeni topilmadi. Qayta login qiling.");
       }
 
-      const timestamp = Date.now();
-      console.log("[v0] Uploading JAR with data:", {
-        name: `${formData.name} JAR ${timestamp}`,
-        server_type: formData.server_type,
-        minecraft_version: formData.minecraft_version,
-      });
+      let newServer: { id: string };
+      if (archiveType === "zip" && zipFile) {
+        newServer = await minecraftAPI.createServerWithArchive(
+          {
+            name: formData.name,
+            slug: formData.slug,
+            server_jar: "",
+            server_type: formData.server_type,
+            loader_version: formData.loader_version || null,
+            minecraft_version: formData.minecraft_version,
+            port: formData.port,
+            min_ram: formData.min_ram,
+            max_ram: formData.max_ram,
+            max_players: formData.max_players,
+            motd: formData.motd,
+            gamemode: formData.gamemode,
+            difficulty: formData.difficulty,
+            pvp: formData.pvp,
+            online_mode: formData.online_mode,
+            white_list: formData.white_list,
+            spawn_protection: 16,
+            view_distance: 10,
+          },
+          zipFile,
+          setUploadProgress,
+        );
+      } else if (jarFile) {
+        const timestamp = Date.now();
+        const uploadedJar = await minecraftAPI.uploadServerJar(
+          jarFile,
+          {
+            name: `${formData.name} JAR ${timestamp}`,
+            server_type: formData.server_type,
+            minecraft_version: formData.minecraft_version,
+            is_default: false,
+          },
+          setUploadProgress,
+        );
 
-      const uploadedJar = await minecraftAPI.uploadServerJar(jarFile, {
-        name: `${formData.name} JAR ${timestamp}`,
-        server_type: formData.server_type,
-        minecraft_version: formData.minecraft_version,
-        is_default: false,
-      });
-
-      console.log("[v0] Uploaded JAR response:", uploadedJar);
-
-      const newServer = await minecraftAPI.createServer({
-        name: formData.name,
-        slug: formData.slug,
-        server_jar: uploadedJar.id,
-        loader_version: formData.loader_version || null,
-        port: formData.port,
-        min_ram: formData.min_ram,
-        max_ram: formData.max_ram,
-        max_players: formData.max_players,
-        motd: formData.motd,
-        gamemode: formData.gamemode,
-        difficulty: formData.difficulty,
-        pvp: formData.pvp,
-        online_mode: formData.online_mode,
-        white_list: formData.white_list,
-      });
+        newServer = await minecraftAPI.createServer({
+          name: formData.name,
+          slug: formData.slug,
+          server_jar: uploadedJar.id,
+          loader_version: formData.loader_version || null,
+          port: formData.port,
+          min_ram: formData.min_ram,
+          max_ram: formData.max_ram,
+          max_players: formData.max_players,
+          motd: formData.motd,
+          gamemode: formData.gamemode,
+          difficulty: formData.difficulty,
+          pvp: formData.pvp,
+          online_mode: formData.online_mode,
+          white_list: formData.white_list,
+        });
+      } else {
+        throw new Error("Arxiv fayl topilmadi");
+      }
 
       setIsCreateOpen(false);
 
@@ -208,7 +245,10 @@ export default function MinecraftServersPage() {
         white_list: false,
       });
       setJarFile(null);
+      setZipFile(null);
+      setArchiveType("jar");
       setErrorMessage(null);
+      setUploadProgress(0);
 
       router.push(`/dashboard/minecraft/${newServer.id}`);
     } catch (err: any) {
@@ -369,8 +409,45 @@ export default function MinecraftServersPage() {
                   Server JAR fayli
                 </h3>
                 <div className="space-y-2">
+                  <Label className="text-[var(--text-secondary)]">Fayl turi</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={archiveType === "jar" ? "default" : "outline"}
+                      className={archiveType === "jar" ? "cyber-btn" : ""}
+                      onClick={() => {
+                        setArchiveType("jar");
+                        setZipFile(null);
+                        setUploadProgress(0);
+                      }}
+                    >
+                      JAR
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={archiveType === "zip" ? "default" : "outline"}
+                      className={archiveType === "zip" ? "cyber-btn" : ""}
+                      onClick={() => {
+                        setArchiveType("zip");
+                        setJarFile(null);
+                        setUploadProgress(0);
+                        setFormData((prev) => ({
+                          ...prev,
+                          server_type: "custom",
+                          loader_version: "",
+                        }));
+                      }}
+                    >
+                      ZIP
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label className="text-[var(--text-secondary)]">
-                    JAR fayl yuklash *
+                    {archiveType === "jar"
+                      ? "JAR fayl yuklash *"
+                      : "ZIP fayl yuklash *"}
                   </Label>
                   <input
                     ref={jarFileInputRef}
@@ -385,36 +462,73 @@ export default function MinecraftServersPage() {
                     }}
                     className="hidden"
                   />
+                  <input
+                    ref={zipFileInputRef}
+                    type="file"
+                    accept=".zip"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setZipFile(file);
+                        setErrorMessage(null);
+                      }
+                    }}
+                    className="hidden"
+                  />
                   <div
-                    onClick={() => jarFileInputRef.current?.click()}
+                    onClick={() =>
+                      archiveType === "jar"
+                        ? jarFileInputRef.current?.click()
+                        : zipFileInputRef.current?.click()
+                    }
                     className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                      jarFile
+                      (archiveType === "jar" && jarFile) ||
+                      (archiveType === "zip" && zipFile)
                         ? "border-green-500/50 bg-green-500/5"
                         : "border-[var(--border-color)] hover:border-[var(--primary)]"
                     }`}
                   >
-                    {jarFile ? (
+                    {(archiveType === "jar" && jarFile) ||
+                    (archiveType === "zip" && zipFile) ? (
                       <div className="flex items-center justify-center gap-2">
                         <FileBox className="w-5 h-5 text-green-400" />
                         <span className="text-[var(--text-primary)]">
-                          {jarFile.name}
+                          {archiveType === "jar" ? jarFile?.name : zipFile?.name}
                         </span>
                         <span className="text-[var(--text-secondary)] text-sm">
-                          ({formatFileSize(jarFile.size)})
+                          (
+                          {formatFileSize(
+                            archiveType === "jar"
+                              ? (jarFile?.size ?? 0)
+                              : (zipFile?.size ?? 0),
+                          )}
+                          )
                         </span>
                       </div>
                     ) : (
                       <div>
                         <Upload className="w-8 h-8 text-[var(--text-secondary)] mx-auto mb-2" />
                         <p className="text-[var(--text-primary)]">
-                          JAR faylni tanlash uchun bosing
+                          {archiveType === "jar"
+                            ? "JAR faylni tanlash uchun bosing"
+                            : "ZIP faylni tanlash uchun bosing"}
                         </p>
                         <p className="text-[var(--text-secondary)] text-sm mt-1">
-                          Paper, Spigot, Vanilla va boshqalar
+                          {archiveType === "jar"
+                            ? "Paper, Spigot, Vanilla va boshqalar"
+                            : "Oldindan tayyor server papkasini ZIP qilib yuklang"}
                         </p>
                       </div>
                     )}
                   </div>
+                  {isSubmitting && uploadProgress > 0 && (
+                    <div className="space-y-2">
+                      <Progress value={uploadProgress} className="h-2" />
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Yuklanmoqda: {uploadProgress}%
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -500,6 +614,7 @@ export default function MinecraftServersPage() {
                         <SelectItem value="fabric">Fabric</SelectItem>
                         <SelectItem value="forge">Forge</SelectItem>
                         <SelectItem value="neoforge">NeoForge</SelectItem>
+                        <SelectItem value="custom">Custom (ZIP / tayyor papka)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -740,7 +855,10 @@ export default function MinecraftServersPage() {
                 <Button
                   type="submit"
                   className="cyber-btn"
-                  disabled={isSubmitting || !jarFile}
+                  disabled={
+                    isSubmitting ||
+                    (archiveType === "jar" ? !jarFile : !zipFile)
+                  }
                 >
                   {isSubmitting ? (
                     <>
