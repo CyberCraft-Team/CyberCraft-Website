@@ -1,8 +1,8 @@
 "use client";
 
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 
 export default function GoogleLoginButton() {
@@ -10,27 +10,42 @@ export default function GoogleLoginButton() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleCredential = useCallback(
+    async (credential: string) => {
+      if (!credential) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        await googleLogin(credential);
+        window.location.href = "/";
+      } catch (err: any) {
+        setError(err.message || "Google orqali kirishda xatolik yuz berdi");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [googleLogin]
+  );
+
+  // use_fedcm_for_prompt: false — One Tap popup FedCM ishlatmaydi (iframe orqali ishlaydi).
+  // Shu parametrsiz useGoogleOneTapLogin VA <GoogleLogin> birgalikda ikkita
+  // navigator.credentials.get() chaqiradi → "Only one request" FedCM xatosi chiqadi.
+  useGoogleOneTapLogin({
+    onSuccess: (response) => {
+      if (response.credential) {
+        handleCredential(response.credential);
+      }
+    },
+    onError: () => {
+      // One Tap dismiss yoki bloklangan bo'lsa — silent
+    },
+    cancel_on_tap_outside: false,
+    use_fedcm_for_prompt: false,
+  });
+
   const handleSuccess = async (credentialResponse: any) => {
-    console.log("Google login success callback:", credentialResponse);
-    if (!credentialResponse.credential) {
-      console.warn("No credential in response");
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log("Calling googleLogin hook...");
-      await googleLogin(credentialResponse.credential);
-      console.log("googleLogin success, redirecting...");
-      window.location.href = "/";
-    } catch (err: any) {
-      console.error("googleLogin failed:", err);
-      setError(err.message || "Google orqali kirishda xatolik yuz berdi");
-    } finally {
-      setIsLoading(false);
-    }
+    if (!credentialResponse.credential) return;
+    await handleCredential(credentialResponse.credential);
   };
 
   return (
@@ -63,10 +78,15 @@ export default function GoogleLoginButton() {
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={() => setError("Google orqali kirishda xatolik yuz berdi")}
-            useOneTap
+            // useOneTap OLIB TASHLANDI — yuqorida useGoogleOneTapLogin hook ishlatilmoqda.
+            // Ikkalasi birga bo'lsa: initialize() ikki marta chaqiriladi → FedCM xatosi.
             theme="filled_black"
             shape="rectangular"
-            width="100%"
+            // GSI faqat piksel qabul qiladi, "100%" yaroqsiz → button ko'rinmaydi
+            width={400}
+            // use_fedcm_for_button: false — button bosilganda FedCM ishlatmaydi.
+            // FedCM "NetworkError: Error retrieving a token" xatosining oldini oladi.
+            use_fedcm_for_button={false}
           />
         )}
       </div>

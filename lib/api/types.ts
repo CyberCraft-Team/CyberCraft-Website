@@ -191,6 +191,9 @@ export interface MinecraftServer {
   created_at: string;
   updated_at: string;
   last_started: string | null;
+  icon_url: string | null;
+  background_image_url: string | null;
+  gallery_images: { id: number; image_url: string; caption: string }[];
 }
 
 export interface MinecraftServerDetail extends MinecraftServer {
@@ -211,6 +214,8 @@ export interface MinecraftServerDetail extends MinecraftServer {
       max: number;
     };
     is_installed: boolean;
+    icon_url: string | null;
+    background_image_url: string | null;
   };
 }
 

@@ -523,6 +523,64 @@ export const minecraftAPI = {
         body: JSON.stringify({ path, content }),
       },
     ),
+  
+  uploadServerImages: async (
+    serverId: string,
+    icon?: File,
+    background?: File
+  ) => {
+    const token = getAdminToken();
+    const formData = new FormData();
+    if (icon) formData.append("icon", icon);
+    if (background) formData.append("background_image", background);
+
+    const response = await fetch(
+      `${API_BASE_URL}/minecraft/servers/${serverId}/images/`,
+      {
+        method: "PATCH",
+        headers: {
+          ...(token ? { Authorization: `Token ${token}` } : {}),
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(error.error || error.detail || "Rasm yuklashda xato");
+    }
+
+    return response.json() as Promise<import("./types").MinecraftServerDetail>;
+  },
+
+  uploadGalleryImage: async (serverId: string, file: File) => {
+    const token = getAdminToken();
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(
+      `${API_BASE_URL}/minecraft/servers/${serverId}/gallery/`,
+      {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Token ${token}` } : {}),
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(error.error || error.detail || "Galereya rasm yuklashda xato");
+    }
+
+    return response.json();
+  },
+
+  deleteGalleryImage: (serverId: string, imageId: number) =>
+    fetchWithAuth<void>(`/minecraft/servers/${serverId}/gallery/${imageId}/`, {
+      method: "DELETE",
+    }),
 };
 
 export class ServerConsole {

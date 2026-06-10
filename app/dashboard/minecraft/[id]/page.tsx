@@ -26,6 +26,8 @@ import {
   Skull,
   RefreshCw,
   Download,
+  Image as ImageIcon,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +67,7 @@ export default function ServerDetailPage({
   const [actionLoading, setActionLoading] = useState(false);
   const [uploadingMod, setUploadingMod] = useState(false);
   const [installLoading, setInstallLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const consoleRef = useRef<ServerConsole | null>(null);
@@ -286,6 +289,40 @@ export default function ServerDetailPage({
       setMods((prev) => prev.filter((mod) => mod.id !== modId));
     } catch (error: any) {
       alert(error.message || "Mod o'chirishda xato");
+    }
+  };
+
+  const handleImageUpload = async (
+    type: "icon" | "background" | "gallery",
+    file: File,
+  ) => {
+    setUploadingImage(type);
+    try {
+      if (type === "gallery") {
+        await minecraftAPI.uploadGalleryImage(serverId, file);
+      } else {
+        await minecraftAPI.uploadServerImages(
+          serverId,
+          type === "icon" ? file : undefined,
+          type === "background" ? file : undefined,
+        );
+      }
+      await loadServerData();
+    } catch (error: any) {
+      alert(error.message || "Rasm yuklashda xato");
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  const handleDeleteGalleryImage = async (imageId: number) => {
+    if (!confirm("Rasmni o'chirishni tasdiqlaysizmi?")) return;
+
+    try {
+      await minecraftAPI.deleteGalleryImage(serverId, imageId);
+      await loadServerData();
+    } catch (error: any) {
+      alert(error.message || "Rasmni o'chirishda xato");
     }
   };
 
@@ -644,7 +681,197 @@ export default function ServerDetailPage({
             <FolderOpen className="w-4 h-4 mr-2" />
             Fayllar
           </TabsTrigger>
+          <TabsTrigger
+            value="images"
+            className="data-[state=active]:bg-[var(--primary)]/20"
+          >
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Rasmlar
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="images">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="cyber-card border-[var(--border-color)]">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-[var(--primary)]" />
+                  Server Vizual Efektlari
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Icon Section */}
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="relative group">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/20 flex items-center justify-center">
+                      {server.icon_url ? (
+                        <img
+                          src={server.icon_url}
+                          alt="Icon"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="w-8 h-8 text-gray-600" />
+                      )}
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity rounded-xl">
+                      <Upload className="w-5 h-5 text-white" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload("icon", file);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Server Logotipi</h4>
+                    <p className="text-xs text-gray-400 mb-2">
+                      Launcherda ko'rinadigan asosiy server iconi. 1:1 nisbatda bo'lishi tavsiya etiladi.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-white/10 hover:border-[var(--primary)]"
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleImageUpload("icon", file);
+                        };
+                        input.click();
+                      }}
+                      disabled={uploadingImage === "icon"}
+                    >
+                      {uploadingImage === "icon" ? (
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-3 h-3 mr-2" />
+                      )}
+                      Rasmni almashtirish
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Background Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-white">Dashboard Fon Rasmi</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleImageUpload("background", file);
+                        };
+                        input.click();
+                      }}
+                      disabled={uploadingImage === "background"}
+                    >
+                      {uploadingImage === "background" ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Fonni yuklash
+                    </Button>
+                  </div>
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black/40 border border-white/10 flex items-center justify-center">
+                    {server.background_image_url ? (
+                      <img
+                        src={server.background_image_url}
+                        alt="Background"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center text-gray-600">
+                        <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p className="text-xs">Hali fon rasmi yuklanmagan</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="cyber-card border-[var(--border-color)]">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-[var(--primary)]" />
+                    Skrinshotlar Galereyasi
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    className="bg-[var(--primary)] hover:bg-[var(--primary)]/80 text-black font-semibold h-8"
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = "image/*";
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) handleImageUpload("gallery", file);
+                      };
+                      input.click();
+                    }}
+                    disabled={uploadingImage === "gallery"}
+                  >
+                    {uploadingImage === "gallery" ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4 mr-2" />
+                    )}
+                    Rasm qo'shish
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {server.gallery_images && server.gallery_images.length > 0 ? (
+                    server.gallery_images.map((img) => (
+                      <div
+                        key={img.id}
+                        className="relative group aspect-video rounded-lg overflow-hidden border border-white/5 bg-black/20"
+                      >
+                        <img
+                          src={img.image_url}
+                          alt="Server screenshot"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8 rounded-full"
+                            onClick={() => handleDeleteGalleryImage(img.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 flex flex-col items-center justify-center py-12 text-gray-600">
+                      <ImageIcon className="w-12 h-12 mb-3 opacity-20" />
+                      <p className="text-sm">Galereya bo'sh</p>
+                      <p className="text-xs mt-1">Serveringizdan skrinshotlar qo'shing</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="console">
           <Card className="cyber-card border-[var(--border-color)] overflow-hidden">
