@@ -1,15 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Production build — standalone rejim (minimal output)
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cybercraft-backend.onrender.com',
+        hostname: '**',
       },
       {
         protocol: 'http',
-        hostname: 'localhost',
+        hostname: '**',
       },
     ],
   },
