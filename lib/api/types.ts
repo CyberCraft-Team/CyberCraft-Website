@@ -33,6 +33,7 @@ export interface UserMinimal {
   cc_balance?: number;
   rank?: string;
   referral_code?: string;
+  is_email_verified?: boolean;
 }
 
 export interface Modpack {

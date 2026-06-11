@@ -213,10 +213,12 @@ export function useUserAuth() {
     return response;
   };
 
-  const googleLogin = async (idToken: string) => {
-    const response = await apiClient.googleLogin(idToken);
-    setUserToken(response.token);
-    mutate({ user: response.user });
+  const googleLogin = async (idToken: string, username?: string) => {
+    const response = await apiClient.googleLogin(idToken, username);
+    if (!response.needs_username) {
+      setUserToken(response.token);
+      mutate({ user: response.user });
+    }
     return response;
   };
 

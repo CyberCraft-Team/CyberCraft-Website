@@ -11,6 +11,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,46 @@ export default function RegisterPage() {
     password: "",
     password_confirm: "",
   });
+  const [skinFile, setSkinFile] = useState<File | null>(null);
+  const [skinPreview, setSkinPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.toLowerCase().endsWith(".png")) {
+        setErrors((prev) => ({
+          ...prev,
+          skin: ["Faqat PNG formatdagi skinlar qabul qilinadi"],
+        }));
+        return;
+      }
+      if (file.size > 256 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          skin: ["Skin fayl hajmi 256KB dan oshmasligi kerak"],
+        }));
+        return;
+      }
+      setSkinFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSkinPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Clear skin error
+      if (errors.skin) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.skin;
+          return newErrors;
+        });
+      }
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,10 +82,19 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    if (!skinFile) {
+      setErrors({ skin: ["Skin faylini yuklash shart"] });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await apiClient.register(formData);
+      await apiClient.register({
+        ...formData,
+        skin: skinFile,
+      });
       setIsSuccess(true);
     } catch (err: any) {
       if (err.message) {
@@ -244,6 +291,64 @@ export default function RegisterPage() {
                 <p className="text-red-500 text-sm">
                   {errors.password_confirm[0]}
                 </p>
+              )}
+            </div>
+
+            {/* Minecraft Skin */}
+            <div className="space-y-2">
+              <label className="text-sm text-[var(--text-secondary)] block">
+                Minecraft Skin *
+              </label>
+
+              {!skinFile ? (
+                <label className={`flex flex-col items-center justify-center h-28 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--primary)] bg-[var(--bg-dark)]/50 rounded-xl cursor-pointer transition-all group ${errors.skin ? "border-red-500" : ""}`}>
+                  <Upload className="w-7 h-7 text-[var(--text-secondary)]/70 group-hover:text-[var(--primary)] transition-colors mb-2" />
+                  <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    Skin faylini yuklang (.png)
+                  </span>
+                  <span className="text-[10px] text-[var(--text-secondary)]/50 mt-1">
+                    Maksimal 256KB, 64x64 yoki 64x32
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              ) : (
+                skinPreview && (
+                  <div className="flex items-center gap-4 p-3 bg-[var(--bg-dark)] border border-[var(--primary)] rounded-xl">
+                    <img
+                      src={skinPreview}
+                      alt="Skin Preview"
+                      className="w-14 h-14 rounded border border-[var(--border-color)] bg-black/40"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate text-[var(--text-primary)]">
+                        {skinFile.name}
+                      </p>
+                      <p className="text-[10px] text-[var(--text-secondary)]">
+                        {(skinFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-8 px-2 text-xs"
+                      onClick={() => {
+                        setSkinFile(null);
+                        setSkinPreview(null);
+                      }}
+                    >
+                      O'chirish
+                    </Button>
+                  </div>
+                )
+              )}
+              {errors.skin && (
+                <p className="text-red-500 text-sm">{errors.skin[0]}</p>
               )}
             </div>
 

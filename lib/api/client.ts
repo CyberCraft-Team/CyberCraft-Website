@@ -131,18 +131,33 @@ class ApiClient {
     email: string;
     password: string;
     password_confirm: string;
+    skin: File;
   }) {
-    return this.fetch<{
+    const formData = new FormData();
+    formData.append("username", data.username);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("password_confirm", data.password_confirm);
+    formData.append("skin", data.skin);
+
+    const response = await fetch(`${this.baseUrl}/auth/register/`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(JSON.stringify(errorData));
+    }
+
+    return response.json() as Promise<{
       message: string;
       user: {
         id: number;
         username: string;
         email: string;
       };
-    }>("/auth/register/", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    }>;
   }
 
   async uploadSkin(token: string, file: File) {
@@ -323,14 +338,16 @@ class ApiClient {
     }
   }
 
-  async googleLogin(idToken: string) {
+  async googleLogin(idToken: string, username?: string) {
     return this.fetch<{
       token: string;
       user: import("./types").AdminUser;
       is_new_user: boolean;
+      needs_username?: boolean;
+      email?: string;
     }>("/auth/google-login/", {
       method: "POST",
-      body: JSON.stringify({ id_token: idToken }),
+      body: JSON.stringify({ id_token: idToken, username }),
     });
   }
 

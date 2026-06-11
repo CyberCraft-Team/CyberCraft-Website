@@ -110,7 +110,7 @@ export default function CabinetSidebar({ isOpen = true, onClose }: CabinetSideba
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[var(--border-color)]">
           <div className="text-xs text-[var(--text-secondary)] text-center">
             <p>CyberCraft Cabinet</p>
-            <p className="mt-1">v2.0</p>
+            <p className="mt-1">v1.0</p>
           </div>
         </div>
       </aside>

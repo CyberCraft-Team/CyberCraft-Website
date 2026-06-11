@@ -41,23 +41,33 @@ function EmailVerificationSection() {
     }
   };
 
-  // For now, we don't have is_email_verified in the UserMinimal type returned from API
-  // We can check if the user has email set
   const hasEmail = !!user?.email;
+  const isEmailVerified = !!user?.is_email_verified;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 p-4 rounded-xl bg-[var(--bg-dark)] border border-[var(--border-color)]">
-        <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-          <Mail className="w-5 h-5 text-blue-400" />
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${
+          isEmailVerified 
+            ? "bg-emerald-500/10 border-emerald-500/30" 
+            : "bg-blue-500/10 border-blue-500/30"
+        }`}>
+          <Mail className={`w-5 h-5 ${isEmailVerified ? "text-emerald-400" : "text-blue-400"}`} />
         </div>
         <div className="flex-1">
           <p className="text-sm font-medium text-[var(--text-primary)]">
             {user?.email || "Email kiritilmagan"}
           </p>
-          <p className="text-xs text-[var(--text-secondary)]">
-            Email manzilingizni tasdiqlang
-          </p>
+          {isEmailVerified ? (
+            <p className="text-xs text-emerald-400 flex items-center gap-1 font-medium mt-0.5">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+              Email manzilingiz tasdiqlangan
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Email manzilingizni tasdiqlang
+            </p>
+          )}
         </div>
       </div>
 
@@ -77,7 +87,7 @@ function EmailVerificationSection() {
         </div>
       )}
 
-      {hasEmail && (
+      {hasEmail && !isEmailVerified && (
         <Button
           onClick={handleSendVerification}
           disabled={sending}
