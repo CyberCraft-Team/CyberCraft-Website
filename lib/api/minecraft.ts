@@ -5,11 +5,17 @@ const API_BASE_URL =
 
 const WS_BASE_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
-  (API_BASE_URL.startsWith("http")
-    ? API_BASE_URL.replace(/^http/, "ws").replace(/\/api$/, "")
-    : typeof window !== "undefined"
-      ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
-      : "ws://localhost:8000");
+  (() => {
+    try {
+      const url = new URL(API_BASE_URL);
+      const wsProto = url.protocol === "https:" ? "wss:" : "ws:";
+      return `${wsProto}//${url.host}`;
+    } catch {
+      return typeof window !== "undefined"
+        ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
+        : "ws://localhost:8000";
+    }
+  })();
 
 const isApiAvailable = () => {
   return true;
