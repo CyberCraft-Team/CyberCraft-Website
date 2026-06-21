@@ -217,6 +217,7 @@ export interface MinecraftServerDetail extends MinecraftServer {
     is_installed: boolean;
     icon_url: string | null;
     background_image_url: string | null;
+    online_player_list?: string[];
   };
 }
 

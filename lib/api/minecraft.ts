@@ -581,6 +581,30 @@ export const minecraftAPI = {
     fetchWithAuth<void>(`/minecraft/servers/${serverId}/gallery/${imageId}/`, {
       method: "DELETE",
     }),
+
+  getPlayers: (serverId: string) =>
+    fetchWithAuth<{
+      whitelist: { name: string; uuid: string }[];
+      ops: { name: string; uuid: string; level: number; bypassesPlayerLimit: boolean }[];
+      banned: { name: string; uuid: string; created: string; source: string; expires: string; reason: string }[];
+    }>(`/minecraft/servers/${serverId}/players/`),
+
+  updatePlayers: (
+    serverId: string,
+    data: {
+      list_type: "whitelist" | "ops" | "banned";
+      action: "add" | "remove";
+      username: string;
+      reason?: string;
+    },
+  ) =>
+    fetchWithAuth<{ message: string }>(
+      `/minecraft/servers/${serverId}/players/`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    ),
 };
 
 export class ServerConsole {
@@ -590,6 +614,7 @@ export class ServerConsole {
   private onStatus: (status: string) => void;
   private onError: (error: string) => void;
   private onInitialLogs?: (logs: import("./types").ServerLog[]) => void;
+  private onStats?: (stats: { cpu: number; memory: number; timestamp: string }) => void;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private isWebSocketAvailable = false;
@@ -603,6 +628,7 @@ export class ServerConsole {
       onStatus: (status: string) => void;
       onError: (error: string) => void;
       onInitialLogs?: (logs: import("./types").ServerLog[]) => void;
+      onStats?: (stats: { cpu: number; memory: number; timestamp: string }) => void;
     },
   ) {
     this.serverId = serverId;
@@ -610,6 +636,7 @@ export class ServerConsole {
     this.onStatus = callbacks.onStatus;
     this.onError = callbacks.onError;
     this.onInitialLogs = callbacks.onInitialLogs;
+    this.onStats = callbacks.onStats;
     this.connect();
   }
 
@@ -662,6 +689,12 @@ export class ServerConsole {
         case "status":
         case "server_status":
           this.onStatus(data.status);
+          break;
+        case "stats":
+        case "server_stats":
+          if (this.onStats) {
+            this.onStats(data.stats);
+          }
           break;
         case "error":
           this.onError(data.message);

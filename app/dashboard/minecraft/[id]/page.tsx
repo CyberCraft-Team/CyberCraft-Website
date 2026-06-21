@@ -43,6 +43,14 @@ import type {
   ServerMod,
   ServerFile,
 } from "@/lib/api/types";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+} from "recharts";
 
 export default function ServerDetailPage({
   params,
@@ -69,6 +77,21 @@ export default function ServerDetailPage({
   const [installLoading, setInstallLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
+  // Monitoring & Player Management States
+  const [statsHistory, setStatsHistory] = useState<{ cpu: number; memory: number; time: string }[]>([]);
+  const [onlinePlayerList, setOnlinePlayerList] = useState<string[]>([]);
+  const [playerLists, setPlayerLists] = useState<{
+    whitelist: { name: string; uuid: string }[];
+    ops: { name: string; uuid: string; level: number; bypassesPlayerLimit: boolean }[];
+    banned: { name: string; uuid: string; created: string; source: string; expires: string; reason: string }[];
+  }>({ whitelist: [], ops: [], banned: [] });
+  const [playerListsLoading, setPlayerListsLoading] = useState(false);
+
+  const [newWhitelistedPlayer, setNewWhitelistedPlayer] = useState("");
+  const [newOpPlayer, setNewOpPlayer] = useState("");
+  const [newBannedPlayer, setNewBannedPlayer] = useState("");
+  const [banReason, setBanReason] = useState("");
+
   const logsEndRef = useRef<HTMLDivElement>(null);
   const consoleRef = useRef<ServerConsole | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,9 +108,38 @@ export default function ServerDetailPage({
           }
           return [...prev.slice(-500), log];
         });
+
+        // Dynamic player join/leave syncing in frontend
+        if (log.message.includes("joined the game")) {
+          const match = log.message.match(/\]: ([a-zA-Z0-9_]+) joined the game/);
+          if (match) {
+            const name = match[1];
+            setOnlinePlayerList((prev) => Array.from(new Set([...prev, name])));
+          }
+        } else if (log.message.includes("left the game")) {
+          const match = log.message.match(/\]: ([a-zA-Z0-9_]+) left the game/);
+          if (match) {
+            const name = match[1];
+            setOnlinePlayerList((prev) => prev.filter((p) => p !== name));
+          }
+        }
       },
       onStatus: (status) => {
         setServer((prev) => (prev ? { ...prev, status: status as any } : prev));
+        if (status === "stopped") {
+          setStatsHistory([]);
+          setOnlinePlayerList([]);
+        }
+      },
+      onStats: (stats) => {
+        const timeStr = new Date(stats.timestamp).toLocaleTimeString("uz-UZ", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        setStatsHistory((prev) => {
+          return [...prev.slice(-29), { cpu: stats.cpu, memory: stats.memory, time: timeStr }];
+        });
       },
       onError: (error) => {
         console.error("WebSocket error:", error);
@@ -116,11 +168,58 @@ export default function ServerDetailPage({
       setServer(serverData);
       setMods(modsData);
       setFiles(filesData);
+      if (serverData.status_info?.online_player_list) {
+        setOnlinePlayerList(serverData.status_info.online_player_list);
+      }
     } catch (error) {
       console.error("Error loading server:", error);
       router.push("/dashboard/minecraft");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadPlayerLists = async () => {
+    setPlayerListsLoading(true);
+    try {
+      const data = await minecraftAPI.getPlayers(serverId);
+      setPlayerLists(data);
+    } catch (e) {
+      console.error("Error loading player lists:", e);
+    } finally {
+      setPlayerListsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlayerLists();
+  }, [serverId]);
+
+  const handlePlayerAction = async (
+    listType: "whitelist" | "ops" | "banned",
+    action: "add" | "remove",
+    username: string,
+    reason?: string
+  ) => {
+    try {
+      await minecraftAPI.updatePlayers(serverId, {
+        list_type: listType,
+        action,
+        username,
+        reason,
+      });
+      await loadPlayerLists();
+      
+      if (action === "add") {
+        if (listType === "whitelist") setNewWhitelistedPlayer("");
+        if (listType === "ops") setNewOpPlayer("");
+        if (listType === "banned") {
+          setNewBannedPlayer("");
+          setBanReason("");
+        }
+      }
+    } catch (error: any) {
+      alert(error.message || "Xato yuz berdi");
     }
   };
 
@@ -675,6 +774,13 @@ export default function ServerDetailPage({
             Modlar
           </TabsTrigger>
           <TabsTrigger
+            value="players"
+            className="data-[state=active]:bg-[var(--primary)]/20"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            O'yinchilar
+          </TabsTrigger>
+          <TabsTrigger
             value="files"
             className="data-[state=active]:bg-[var(--primary)]/20"
           >
@@ -873,171 +979,243 @@ export default function ServerDetailPage({
           </div>
         </TabsContent>
 
-        <TabsContent value="console">
-          <Card className="cyber-card border-[var(--border-color)] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700">
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div
-                    className={`w-3 h-3 rounded-full ${server.status === "running" ? "bg-green-500 animate-pulse" : server.status === "stopped" ? "bg-red-500" : "bg-yellow-500 animate-pulse"}`}
-                  />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/30" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/30" />
+        <TabsContent value="console" className="space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="xl:col-span-3">
+              <Card className="cyber-card border-[var(--border-color)] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1.5">
+                      <div
+                        className={`w-3 h-3 rounded-full ${server.status === "running" ? "bg-green-500 animate-pulse" : server.status === "stopped" ? "bg-red-500" : "bg-yellow-500 animate-pulse"}`}
+                      />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/30" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/30" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-green-400" />
+                      <span className="text-sm font-medium text-white">
+                        Server Console
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          server.status === "running"
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : server.status === "stopped"
+                              ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                              : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                        }`}
+                      >
+                        {server.status === "running"
+                          ? "ONLINE"
+                          : server.status === "stopped"
+                            ? "OFFLINE"
+                            : (server.status || "UNKNOWN").toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{logs.length} log</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLogs([])}
+                      className="text-gray-400 hover:text-white hover:bg-gray-700 h-7 px-2"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                      Tozalash
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-green-400" />
-                  <span className="text-sm font-medium text-white">
-                    Server Console
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      server.status === "running"
-                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                        : server.status === "stopped"
-                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                          : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                    }`}
-                  >
-                    {server.status === "running"
-                      ? "ONLINE"
-                      : server.status === "stopped"
-                        ? "OFFLINE"
-                        : (server.status || "UNKNOWN").toUpperCase()}
-                  </span>
+
+                <div className="bg-[#0d1117] p-0">
+                  <ScrollArea className="h-[420px] font-mono text-[13px]">
+                    <div className="p-4 space-y-0.5">
+                      {logs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-[350px] text-gray-600">
+                          <Terminal className="w-12 h-12 mb-3 opacity-30" />
+                          <p className="text-sm">
+                            Console loglari bu yerda ko'rsatiladi
+                          </p>
+                          <p className="text-xs mt-1 text-gray-700">
+                            Serverni ishga tushiring va loglarni kuzating
+                          </p>
+                        </div>
+                      ) : (
+                        logs.map((log, index) => (
+                          <div
+                            key={`${log.id ?? "noid"}-${log.timestamp}-${index}`}
+                            className={`flex items-start gap-2 py-1 px-2 rounded hover:bg-white/5 group ${getLogColor(log.level)}`}
+                          >
+                            <span className="text-gray-600 shrink-0 select-none text-xs leading-5">
+                              {new Date(log.timestamp).toLocaleTimeString("uz-UZ", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                              })}
+                            </span>
+                            <span
+                              className={`shrink-0 select-none text-xs leading-5 w-12 text-center rounded ${
+                                log.level === "error"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : log.level === "warn"
+                                    ? "bg-yellow-500/20 text-yellow-400"
+                                    : log.level === "debug"
+                                      ? "bg-gray-500/20 text-gray-400"
+                                      : "bg-blue-500/20 text-blue-400"
+                              }`}
+                            >
+                              {log.level === "error"
+                                ? "ERR"
+                                : log.level === "warn"
+                                  ? "WARN"
+                                  : log.level === "debug"
+                                    ? "DBG"
+                                    : "INFO"}
+                            </span>
+                            <span className="break-all leading-5">
+                              {log.message}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                      <div ref={logsEndRef} />
+                    </div>
+                  </ScrollArea>
+
+                  {/* Command Input */}
+                  <div className="border-t border-gray-800 bg-[#161b22] p-3">
+                    <form onSubmit={handleSendCommand} className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold font-mono">
+                          $
+                        </span>
+                        <Input
+                          ref={commandInputRef}
+                          value={command}
+                          onChange={(e) => setCommand(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          placeholder={
+                            server.status === "running"
+                              ? "Buyruq kiriting... (help, stop, list, say Hello!)"
+                              : "Server ishlamayapti - avval serverni ishga tushiring"
+                          }
+                          className="pl-8 bg-[#0d1117] border-gray-700 font-mono text-sm text-white placeholder:text-gray-600 focus:border-green-500/50 focus:ring-green-500/20"
+                          disabled={server.status !== "running"}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="bg-green-600 hover:bg-green-500 text-white px-4"
+                        disabled={server.status !== "running" || !command.trim()}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </form>
+
+                    {/* Quick Commands */}
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-gray-600">Tez buyruqlar:</span>
+                      {server.status === "running" ? (
+                        [
+                          "list",
+                          "say Hello!",
+                          "time set day",
+                          "weather clear",
+                          "op",
+                          "gamemode creative",
+                        ].map((cmd) => (
+                          <button
+                            key={cmd}
+                            type="button"
+                            onClick={() => {
+                              setCommand(cmd);
+                              commandInputRef.current?.focus();
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-gray-800/50 text-gray-400 hover:bg-green-500/20 hover:text-green-400 border border-gray-700/50 hover:border-green-500/30 transition-all"
+                          >
+                            {cmd}
+                          </button>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-600 italic">
+                          Server ishga tushirilganda buyruqlar mavjud bo'ladi
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{logs.length} log</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLogs([])}
-                  className="text-gray-400 hover:text-white hover:bg-gray-700 h-7 px-2"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                  Tozalash
-                </Button>
-              </div>
+              </Card>
             </div>
 
-            <div className="bg-[#0d1117] p-0">
-              <ScrollArea className="h-[420px] font-mono text-[13px]">
-                <div className="p-4 space-y-0.5">
-                  {logs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[350px] text-gray-600">
-                      <Terminal className="w-12 h-12 mb-3 opacity-30" />
-                      <p className="text-sm">
-                        Console loglari bu yerda ko'rsatiladi
-                      </p>
-                      <p className="text-xs mt-1 text-gray-700">
-                        Serverni ishga tushiring va loglarni kuzating
-                      </p>
+            <div className="xl:col-span-1 space-y-4">
+              <Card className="cyber-card border-[var(--border-color)] bg-black/40">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-xs font-semibold text-gray-400 flex justify-between items-center">
+                    <span>CPU Boshqaruv</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      {statsHistory.length > 0 ? `${statsHistory[statsHistory.length - 1].cpu}%` : "0%"}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 h-[120px]">
+                  {statsHistory.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-600 italic">
+                      Monitoring to'xtatilgan
                     </div>
                   ) : (
-                    logs.map((log, index) => (
-                      <div
-                        key={`${log.id ?? "noid"}-${log.timestamp}-${index}`}
-                        className={`flex items-start gap-2 py-1 px-2 rounded hover:bg-white/5 group ${getLogColor(log.level)}`}
-                      >
-                        <span className="text-gray-600 shrink-0 select-none text-xs leading-5">
-                          {new Date(log.timestamp).toLocaleTimeString("uz-UZ", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                          })}
-                        </span>
-                        <span
-                          className={`shrink-0 select-none text-xs leading-5 w-12 text-center rounded ${
-                            log.level === "error"
-                              ? "bg-red-500/20 text-red-400"
-                              : log.level === "warn"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : log.level === "debug"
-                                  ? "bg-gray-500/20 text-gray-400"
-                                  : "bg-blue-500/20 text-blue-400"
-                          }`}
-                        >
-                          {log.level === "error"
-                            ? "ERR"
-                            : log.level === "warn"
-                              ? "WARN"
-                              : log.level === "debug"
-                                ? "DBG"
-                                : "INFO"}
-                        </span>
-                        <span className="break-all leading-5">
-                          {log.message}
-                        </span>
-                      </div>
-                    ))
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={statsHistory} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="time" hide />
+                        <YAxis domain={[0, 100]} fontSize={10} stroke="#475569" />
+                        <ChartTooltip contentStyle={{ background: "#0d1117", borderColor: "#30363d", fontSize: "11px", color: "#fff" }} />
+                        <Area type="monotone" dataKey="cpu" stroke="#10b981" fillOpacity={1} fill="url(#cpuGrad)" strokeWidth={1.5} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   )}
-                  <div ref={logsEndRef} />
-                </div>
-              </ScrollArea>
+                </CardContent>
+              </Card>
 
-              {/* Command Input */}
-              <div className="border-t border-gray-800 bg-[#161b22] p-3">
-                <form onSubmit={handleSendCommand} className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 font-bold font-mono">
-                      $
+              <Card className="cyber-card border-[var(--border-color)] bg-black/40">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-xs font-semibold text-gray-400 flex justify-between items-center">
+                    <span>RAM Boshqaruv</span>
+                    <span className="text-sm font-bold text-purple-400">
+                      {statsHistory.length > 0 ? `${Math.round(statsHistory[statsHistory.length - 1].memory)} MB` : "0 MB"}
                     </span>
-                    <Input
-                      ref={commandInputRef}
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder={
-                        server.status === "running"
-                          ? "Buyruq kiriting... (help, stop, list, say Hello!)"
-                          : "Server ishlamayapti - avval serverni ishga tushiring"
-                      }
-                      className="pl-8 bg-[#0d1117] border-gray-700 font-mono text-sm text-white placeholder:text-gray-600 focus:border-green-500/50 focus:ring-green-500/20"
-                      disabled={server.status !== "running"}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="bg-green-600 hover:bg-green-500 text-white px-4"
-                    disabled={server.status !== "running" || !command.trim()}
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </form>
-
-                {/* Quick Commands */}
-                <div className="mt-3 flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-600">Tez buyruqlar:</span>
-                  {server.status === "running" ? (
-                    [
-                      "list",
-                      "say Hello!",
-                      "time set day",
-                      "weather clear",
-                      "op",
-                      "gamemode creative",
-                    ].map((cmd) => (
-                      <button
-                        key={cmd}
-                        type="button"
-                        onClick={() => {
-                          setCommand(cmd);
-                          commandInputRef.current?.focus();
-                        }}
-                        className="text-xs px-2 py-1 rounded bg-gray-800/50 text-gray-400 hover:bg-green-500/20 hover:text-green-400 border border-gray-700/50 hover:border-green-500/30 transition-all"
-                      >
-                        {cmd}
-                      </button>
-                    ))
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 h-[120px]">
+                  {statsHistory.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-xs text-gray-600 italic">
+                      Monitoring to'xtatilgan
+                    </div>
                   ) : (
-                    <span className="text-xs text-gray-600 italic">
-                      Server ishga tushirilganda buyruqlar mavjud bo'ladi
-                    </span>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={statsHistory} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="ramGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="time" hide />
+                        <YAxis domain={[0, server.max_ram]} fontSize={10} stroke="#475569" />
+                        <ChartTooltip contentStyle={{ background: "#0d1117", borderColor: "#30363d", fontSize: "11px", color: "#fff" }} />
+                        <Area type="monotone" dataKey="memory" stroke="#8b5cf6" fillOpacity={1} fill="url(#ramGrad)" strokeWidth={1.5} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
-          </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="mods">
@@ -1124,6 +1302,234 @@ export default function ServerDetailPage({
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="players">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Online players */}
+            <Card className="cyber-card border-[var(--border-color)] bg-black/20">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[var(--primary)]" />
+                  Online O'yinchilar ({onlinePlayerList.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {onlinePlayerList.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-secondary)] italic">
+                    Hech kim online emas
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {onlinePlayerList.map((username) => (
+                      <div key={username} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-dark)] border border-white/5">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`https://minotar.net/avatar/${username}/32`}
+                            alt={username}
+                            className="w-8 h-8 rounded bg-black/40"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://minotar.net/avatar/MHF_Steve/32";
+                            }}
+                          />
+                          <span className="font-semibold text-white">{username}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2 h-8"
+                            onClick={() => {
+                              if (confirm(`${username}ni serverdan kick qilishni tasdiqlaysizmi?`)) {
+                                minecraftAPI.sendCommand(serverId, `kick ${username}`);
+                              }
+                            }}
+                          >
+                            Kick
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Players list management */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Whitelist Panel */}
+                <Card className="cyber-card border-[var(--border-color)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-md font-bold text-white flex justify-between items-center">
+                      <span>Oq ro'yxat (Whitelist)</span>
+                      <span className="text-xs font-normal text-gray-400">{playerLists.whitelist.length} o'yinchi</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newWhitelistedPlayer}
+                        onChange={(e) => setNewWhitelistedPlayer(e.target.value)}
+                        placeholder="Player nomi..."
+                        className="bg-[#0d1117] border-gray-700 text-sm h-9 text-white placeholder:text-gray-600 focus:border-[var(--primary)] focus:ring-[var(--primary)]/20"
+                      />
+                      <Button
+                        size="sm"
+                        className="cyber-btn h-9"
+                        onClick={() => handlePlayerAction("whitelist", "add", newWhitelistedPlayer)}
+                        disabled={!newWhitelistedPlayer.trim()}
+                      >
+                        Qo'shish
+                      </Button>
+                    </div>
+                    
+                    <ScrollArea className="h-[250px] border border-white/5 rounded-lg bg-[var(--bg-dark)] p-2">
+                      {playerListsLoading ? (
+                        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--primary)]" /></div>
+                      ) : playerLists.whitelist.length === 0 ? (
+                        <div className="text-center py-8 text-xs text-gray-500 italic">Oq ro'yxat bo'sh</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {playerLists.whitelist.map((p) => (
+                            <div key={p.uuid} className="flex items-center justify-between p-1.5 rounded hover:bg-white/5 text-sm">
+                              <span className="text-gray-300 font-mono">{p.name}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 w-7 p-0"
+                                onClick={() => handlePlayerAction("whitelist", "remove", p.name)}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                {/* Operator (OP) Panel */}
+                <Card className="cyber-card border-[var(--border-color)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-md font-bold text-white flex justify-between items-center">
+                      <span>Operatorlar (OP)</span>
+                      <span className="text-xs font-normal text-gray-400">{playerLists.ops.length} admin</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newOpPlayer}
+                        onChange={(e) => setNewOpPlayer(e.target.value)}
+                        placeholder="Player nomi..."
+                        className="bg-[#0d1117] border-gray-700 text-sm h-9 text-white placeholder:text-gray-600 focus:border-[var(--primary)] focus:ring-[var(--primary)]/20"
+                      />
+                      <Button
+                        size="sm"
+                        className="cyber-btn h-9"
+                        onClick={() => handlePlayerAction("ops", "add", newOpPlayer)}
+                        disabled={!newOpPlayer.trim()}
+                      >
+                        OP qilish
+                      </Button>
+                    </div>
+
+                    <ScrollArea className="h-[250px] border border-white/5 rounded-lg bg-[var(--bg-dark)] p-2">
+                      {playerListsLoading ? (
+                        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--primary)]" /></div>
+                      ) : playerLists.ops.length === 0 ? (
+                        <div className="text-center py-8 text-xs text-gray-500 italic">Operatorlar yo'q</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {playerLists.ops.map((p) => (
+                            <div key={p.uuid} className="flex items-center justify-between p-1.5 rounded hover:bg-white/5 text-sm">
+                              <span className="text-gray-300 font-mono">{p.name} (Lvl {p.level})</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 w-7 p-0"
+                                onClick={() => handlePlayerAction("ops", "remove", p.name)}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+              </div>
+
+              {/* Ban List Panel */}
+              <Card className="cyber-card border-[var(--border-color)]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-md font-bold text-white flex justify-between items-center">
+                    <span>Blocklanganlar (Bans)</span>
+                    <span className="text-xs font-normal text-gray-400">{playerLists.banned.length} banned</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Input
+                      value={newBannedPlayer}
+                      onChange={(e) => setNewBannedPlayer(e.target.value)}
+                      placeholder="Player nomi..."
+                      className="bg-[#0d1117] border-gray-700 text-sm h-9 text-white placeholder:text-gray-600 focus:border-[var(--primary)] focus:ring-[var(--primary)]/20"
+                    />
+                    <Input
+                      value={banReason}
+                      onChange={(e) => setBanReason(e.target.value)}
+                      placeholder="Ban sababi (reason)..."
+                      className="bg-[#0d1117] border-gray-700 text-sm h-9 text-white placeholder:text-gray-600 focus:border-[var(--primary)] focus:ring-[var(--primary)]/20 md:col-span-2"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-500 text-white h-9"
+                      onClick={() => handlePlayerAction("banned", "add", newBannedPlayer, banReason)}
+                      disabled={!newBannedPlayer.trim()}
+                    >
+                      Ban qilish (Block)
+                    </Button>
+                  </div>
+
+                  <ScrollArea className="h-[180px] border border-white/5 rounded-lg bg-[var(--bg-dark)] p-2">
+                    {playerListsLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--primary)]" /></div>
+                    ) : playerLists.banned.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-gray-500 italic">Banned ro'yxati bo'sh</div>
+                    ) : (
+                      <div className="space-y-1">
+                        {playerLists.banned.map((p) => (
+                          <div key={p.uuid} className="flex items-center justify-between p-2 rounded hover:bg-white/5 text-sm border-b border-white/5 last:border-0">
+                            <div>
+                              <p className="font-semibold text-gray-300 font-mono">{p.name}</p>
+                              <p className="text-xs text-gray-500">Sabab: {p.reason || "Sabab ko'rsatilmagan"}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 h-8 px-2"
+                              onClick={() => handlePlayerAction("banned", "remove", p.name)}
+                            >
+                              Pardon (Unban)
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="files">
