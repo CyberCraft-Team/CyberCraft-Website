@@ -514,7 +514,7 @@ export default function CabinetProfilePage() {
                     ) : bonusStatus.can_claim ? (
                       "Bonus olish"
                     ) : (
-                      "Ertaga kuting"
+                      "Ertaga keling"
                     )}
                   </Button>
                 </>
