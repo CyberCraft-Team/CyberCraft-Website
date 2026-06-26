@@ -33,9 +33,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Dashboard pages — require admin auth
+  // Dashboard pages — require admin auth (either admin token or user token)
   const isAdminRoute = ADMIN_PATHS.some((path) => pathname.startsWith(path));
-  if (isAdminRoute && !adminToken) {
+  if (isAdminRoute && !adminToken && !userToken) {
     return NextResponse.redirect(new URL("/admin-login", request.url));
   }
 

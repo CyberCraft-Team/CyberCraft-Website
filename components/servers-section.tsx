@@ -1,22 +1,16 @@
 "use client";
 
-import { Users, Copy, Check, Gamepad2, Loader2, WifiOff, ExternalLink, Sparkles } from "lucide-react";
+import { Users, Gamepad2, Loader2, WifiOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useServers } from "@/lib/api/hooks";
 import type { Server } from "@/lib/api/types";
+import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
 
 export function ServersSection() {
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const { servers: apiServers, isLoading, isError } = useServers();
-
-  const copyIP = (id: number, ip: string) => {
-    navigator.clipboard.writeText(ip);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+  const headerRevealRef = useScrollRevealGroup({ threshold: 0.2 });
+  const gridRevealRef = useScrollRevealGroup({ threshold: 0.05 });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -51,16 +45,23 @@ export function ServersSection() {
   return (
     <section className="py-20 bg-gradient-to-b from-[var(--bg-dark)] to-[#0d1015]" id="servers">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/30 mb-4">
-            <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-            <span className="text-sm text-[var(--primary)] font-medium">Eng yaxshi serverlar</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+        <div
+          className="text-center mb-14"
+          ref={headerRevealRef as React.RefObject<HTMLDivElement>}
+        >
+          <h2
+            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
+            data-reveal="fade-up"
+            data-delay="0"
+          >
             <span className="text-[var(--text-primary)]">BIZNING </span>
             <span className="text-[var(--primary)] neon-cyan">SERVERLAR</span>
           </h2>
-          <p className="text-[var(--text-secondary)] max-w-2xl mx-auto text-lg">
+          <p
+            className="text-[var(--text-secondary)] max-w-2xl mx-auto text-lg"
+            data-reveal="fade-up"
+            data-delay="150"
+          >
             O'zingizga mos serverni tanlang va sarguzashtni boshlang!
           </p>
         </div>
@@ -98,11 +99,16 @@ export function ServersSection() {
         )}
 
         {!isLoading && apiServers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {apiServers.map((server) => (
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+            ref={gridRevealRef as React.RefObject<HTMLDivElement>}
+          >
+            {apiServers.map((server, index) => (
               <div
                 key={server.id}
                 className="cyber-card p-6 group relative overflow-hidden"
+                data-reveal="fade-up"
+                data-delay={String(index * 150)}
               >
                 {/* Glow effect on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -189,29 +195,14 @@ export function ServersSection() {
                     </div>
                   </div>
 
-                  {/* IP and action buttons */}
+                  {/* Action buttons */}
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 px-4 py-3 bg-[var(--bg-dark)] rounded-lg text-sm text-[var(--primary)] font-mono border border-[var(--border-color)] truncate">
-                      {server.ip_address}
-                    </code>
                     <Button
-                      size="icon"
-                      variant="ghost"
-                      className="shrink-0 w-12 h-12 hover:bg-[var(--primary)]/20 hover:text-[var(--primary)] border border-[var(--border-color)] hover:border-[var(--primary)] transition-all"
-                      onClick={() => copyIP(server.id, server.ip_address)}
-                    >
-                      {copiedId === server.id ? (
-                        <Check className="w-5 h-5 text-green-400" />
-                      ) : (
-                        <Copy className="w-5 h-5" />
-                      )}
-                    </Button>
-                    <Button
-                      className="cyber-btn px-6 h-12 font-bold"
+                      className="cyber-btn w-full h-12 font-bold animate-pulse-glow"
                       disabled={server.status !== "online"}
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      O'ynash
+                      <Gamepad2 className="w-5 h-5 mr-2" />
+                      Launcherdan o'ynash
                     </Button>
                   </div>
                 </div>

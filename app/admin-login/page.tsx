@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,14 +16,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminAuth } from "@/lib/api/hooks";
+import GoogleLoginButton from "@/components/auth/google-login-button";
+import TelegramLoginButton from "@/components/auth/telegram-login-button";
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAdminAuth();
+  const { login, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAdminAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, isAuthLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,6 +137,11 @@ export default function AdminLoginPage() {
               )}
             </Button>
           </form>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <GoogleLoginButton />
+            <TelegramLoginButton />
+          </div>
 
           <p className="text-center text-[var(--text-secondary)] mt-6">
             <Link

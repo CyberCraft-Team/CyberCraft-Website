@@ -5,6 +5,7 @@ import { Youtube, Send, MessageCircle, Gamepad2, ExternalLink, Globe, Music, Ins
 import { useSocialLinks } from "@/lib/api/hooks";
 import type { SocialLink } from "@/lib/api/types";
 import type { LucideIcon } from "lucide-react";
+import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
 
 const links = {
   server: [
@@ -56,13 +57,17 @@ function getSocialColor(link: SocialLink): string {
 
 export function Footer() {
   const { socialLinks } = useSocialLinks();
+  const revealRef = useScrollRevealGroup({ threshold: 0.1 });
 
   return (
     <footer className="bg-[var(--bg-dark)] border-t border-[var(--border-color)]">
-      <div className="container mx-auto px-4 py-16">
+      <div
+        className="container mx-auto px-4 py-16"
+        ref={revealRef as React.RefObject<HTMLDivElement>}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2" data-reveal="fade-up" data-delay="0">
             <Link href="/" className="flex items-center gap-3 mb-5 group">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center glow-box">
                 <Gamepad2 className="w-6 h-6 text-[var(--bg-dark)]" />
@@ -98,7 +103,7 @@ export function Footer() {
           </div>
 
           {/* Server Links */}
-          <div>
+          <div data-reveal="fade-up" data-delay="150">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
               Server
             </h4>
@@ -118,7 +123,7 @@ export function Footer() {
           </div>
 
           {/* Help Links */}
-          <div>
+          <div data-reveal="fade-up" data-delay="300">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
               Yordam
             </h4>
@@ -138,7 +143,7 @@ export function Footer() {
           </div>
 
           {/* Contact — dynamic from social links */}
-          <div>
+          <div data-reveal="fade-up" data-delay="450">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
               Aloqa
             </h4>

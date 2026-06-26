@@ -26,8 +26,14 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
-      router.push("/");
+      const response = await login(username, password);
+      const searchParams = new URLSearchParams(window.location.search);
+      const callback = searchParams.get("callback");
+      if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
+        window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+      } else {
+        router.push("/");
+      }
     } catch (err: any) {
       setError(err.message || "Kirish amalga oshmadi");
     } finally {

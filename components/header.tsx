@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -34,45 +34,117 @@ const navLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/forum", label: "Forum", icon: MessageSquare },
 ];
 
-function smoothScrollTo(hash: string) {
-  const el = document.querySelector(hash);
-  if (!el) return false;
-  const headerHeight = 64;
-  const top = el.getBoundingClientRect().top + window.scrollY - headerHeight;
-  window.scrollTo({ top, behavior: "smooth" });
-  return true;
-}
-
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeSection, setActiveSection] = useState("/");
+  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({
+    opacity: 0,
+  });
   const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Track active section via scroll position
+  useEffect(() => {
+    if (pathname !== "/") {
+      setActiveSection(pathname);
+      return;
+    }
+
+    const sectionIds = ["voting", "news", "servers"]; // bottom-to-top order
+
+    const handleScroll = () => {
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          // Section is active when its top is above 200px from viewport top
+          if (rect.top <= 200) {
+            setActiveSection(`/#${id}`);
+            return;
+          }
+        }
+      }
+      // No section reached the threshold — we're at the top
+      setActiveSection("/");
+    };
+
+    handleScroll(); // Initial check
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
+
+  // Update indicator position when activeSection changes
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeLink = linkRefs.current.get(activeSection);
+      const navEl = navRef.current;
+
+      if (activeLink && navEl) {
+        const navRect = navEl.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
+
+        setIndicatorStyle({
+          left: linkRect.left - navRect.left,
+          width: linkRect.width,
+          opacity: 1,
+        });
+      } else {
+        setIndicatorStyle({ opacity: 0 });
+      }
+    };
+
+    updateIndicator();
+
+    // Also update on resize
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [activeSection, mounted]);
+
+  // Smooth scroll handler for same-page hash transitions
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+      // 1. Same-page hash scrolling
+      if (href.startsWith("/#") && pathname === "/") {
+        const hash = href.slice(1); // e.g. "#servers"
+        const el = document.querySelector(hash);
+        if (el) {
+          e.preventDefault();
+          el.scrollIntoView({ behavior: "smooth" });
+          window.history.pushState(null, "", href);
+          setIsOpen(false);
+        }
+      }
+      // 2. Same-page home click to top
+      else if (href === "/" && pathname === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.history.pushState(null, "", "/");
+        setIsOpen(false);
+      }
+    },
+    [pathname]
+  );
+
+  // Cross-page scroll handling once homepage mounts
   useEffect(() => {
     if (pathname === "/" && window.location.hash) {
+      const hash = window.location.hash;
       const timer = setTimeout(() => {
-        smoothScrollTo(window.location.hash);
+        const el = document.querySelector(hash);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [pathname]);
-
-  const handleNavClick = useCallback((href: string) => {
-    const hash = href.slice(1);
-
-    if (pathname === "/") {
-      smoothScrollTo(hash);
-      window.history.pushState(null, "", href);
-    } else {
-      router.push(href);
-    }
-  }, [pathname, router]);
 
   const handleLogout = async () => {
     await logout();
@@ -204,34 +276,37 @@ export function Header() {
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav ref={navRef} className="hidden lg:flex items-center gap-1 relative">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isHashLink = link.href.startsWith("/#");
-              if (isHashLink) {
-                return (
-                  <button
-                    key={link.href}
-                    type="button"
-                    onClick={() => handleNavClick(link.href)}
-                    className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors duration-200 rounded-lg hover:bg-[var(--primary)]/10 cursor-pointer"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {link.label}
-                  </button>
-                );
-              }
+              const isActive = activeSection === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors duration-200 rounded-lg hover:bg-[var(--primary)]/10"
+                  scroll={isHashLink ? false : undefined}
+                  onClick={(e) => handleNavClick(e, link.href)}
+                  ref={(el) => {
+                    if (el) linkRefs.current.set(link.href, el);
+                    else linkRefs.current.delete(link.href);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 relative z-10 ${
+                    isActive
+                      ? "text-[var(--primary)]"
+                      : "text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
                   {link.label}
                 </Link>
               );
             })}
+            {/* Sliding active indicator */}
+            <div
+              className="nav-active-indicator"
+              style={indicatorStyle}
+            />
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
@@ -255,33 +330,26 @@ export function Header() {
         </div>
 
         {isOpen && (
-          <div className="lg:hidden py-4 border-t border-[var(--border-color)] animate-in slide-in-from-top-2">
+          <div className="absolute top-full left-0 right-0 lg:hidden py-4 px-4 border-b border-[var(--border-color)] glass animate-in slide-in-from-top-2">
             <nav className="flex flex-col gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isHashLink = link.href.startsWith("/#");
-                if (isHashLink) {
-                  return (
-                    <button
-                      key={link.href}
-                      type="button"
-                      className="flex items-center gap-3 px-4 py-3 text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors text-left"
-                      onClick={() => {
-                        handleNavClick(link.href);
-                        setIsOpen(false);
-                      }}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {link.label}
-                    </button>
-                  );
-                }
+                const isActive = activeSection === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex items-center gap-3 px-4 py-3 text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    scroll={isHashLink ? false : undefined}
+                    onClick={(e) => {
+                      handleNavClick(e, link.href);
+                      setIsOpen(false);
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                      isActive
+                        ? "text-[var(--primary)] bg-[var(--primary)]/10 border-l-2 border-[var(--primary)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                    }`}
                   >
                     <Icon className="w-4 h-4" />
                     {link.label}

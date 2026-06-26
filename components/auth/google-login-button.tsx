@@ -39,7 +39,15 @@ export default function GoogleLoginButton() {
           setTempCredential(credential);
           setShowModal(true);
         } else {
-          window.location.href = "/";
+          const searchParams = new URLSearchParams(window.location.search);
+          const callback = searchParams.get("callback");
+          if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
+            window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+          } else if (window.location.pathname === "/admin-login") {
+            window.location.href = "/dashboard";
+          } else {
+            window.location.href = "/";
+          }
         }
       } catch (err: any) {
         setError(err.message || "Google orqali kirishda xatolik yuz berdi");
@@ -65,7 +73,15 @@ export default function GoogleLoginButton() {
         setModalError("Username kiritilishi shart");
       } else {
         setShowModal(false);
-        window.location.href = "/";
+        const searchParams = new URLSearchParams(window.location.search);
+        const callback = searchParams.get("callback");
+        if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
+          window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+        } else if (window.location.pathname === "/admin-login") {
+          window.location.href = "/dashboard";
+        } else {
+          window.location.href = "/";
+        }
       }
     } catch (err: any) {
       setModalError(err.message || "Username validatsiyasida xatolik yuz berdi");

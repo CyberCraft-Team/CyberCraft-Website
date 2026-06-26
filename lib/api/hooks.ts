@@ -49,7 +49,7 @@ export function removeUserToken(): void {
 
 export function getAdminToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(ADMIN_TOKEN_KEY);
+  return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem(USER_TOKEN_KEY);
 }
 
 export function setAdminToken(token: string): void {
@@ -287,6 +287,7 @@ export function useAdminAuth() {
       } catch (e) {}
     }
     removeAdminToken();
+    removeUserToken();
     mutate(undefined);
   };
 

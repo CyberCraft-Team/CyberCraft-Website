@@ -5,16 +5,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { useNews } from "@/lib/api/hooks";
 import type { News } from "@/lib/api/types";
+import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
 
 export function NewsSection() {
   const { news: apiNews, isLoading } = useNews();
+  const headerRevealRef = useScrollRevealGroup({ threshold: 0.2 });
+  const gridRevealRef = useScrollRevealGroup({ threshold: 0.05 });
 
   return (
     <section className="py-20 bg-[var(--bg-card)]" id="news">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <div>
+        <div
+          className="flex items-center justify-between mb-10"
+          ref={headerRevealRef as React.RefObject<HTMLDivElement>}
+        >
+          <div data-reveal="fade-right" data-delay="0">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/20 flex items-center justify-center">
                 <Newspaper className="w-5 h-5 text-[var(--primary)]" />
@@ -31,6 +37,8 @@ export function NewsSection() {
           <Link
             href="/news"
             className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/30 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors group"
+            data-reveal="fade-left"
+            data-delay="200"
           >
             Barcha yangiliklar
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -63,13 +71,18 @@ export function NewsSection() {
         {!isLoading && apiNews.length > 0 && (
           <>
             {/* Featured news grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              ref={gridRevealRef as React.RefObject<HTMLDivElement>}
+            >
               {apiNews.slice(0, 6).map((item, index) => (
                 <Link
                   key={item.id}
                   href={`/news/${item.id}`}
                   className={`cyber-card overflow-hidden group ${index === 0 ? "md:col-span-2 md:row-span-2" : ""
                     }`}
+                  data-reveal={index === 0 ? "scale-up" : "fade-up"}
+                  data-delay={String(index * 120)}
                 >
                   {/* Image placeholder */}
                   <div

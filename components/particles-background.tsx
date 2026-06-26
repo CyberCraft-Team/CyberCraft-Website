@@ -31,7 +31,7 @@ export function ParticlesBackground() {
                     },
                 },
                 color: {
-                    value: ["#00f0ff", "#00ff88", "#ff0060"],
+                    value: ["#00f0ff", "#00ff88", "#ff0060", "#ffffff"],
                 },
                 shape: {
                     type: "circle",
