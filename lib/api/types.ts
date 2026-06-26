@@ -392,3 +392,18 @@ export interface SocialLink {
   is_active: boolean;
   order: number;
 }
+
+export interface LauncherRelease {
+  version: string;
+  download_url: string;
+  file_size: number;
+  release_notes: string;
+  created_at: string;
+}
+
+export interface LauncherDownloads {
+  win32: LauncherRelease | null;
+  darwin: LauncherRelease | null;
+  linux: LauncherRelease | null;
+}
+

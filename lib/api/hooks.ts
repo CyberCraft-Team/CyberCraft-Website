@@ -18,6 +18,7 @@ import type {
   DailyBonusClaimResponse,
   RankPurchaseResponse,
   SocialLink,
+  LauncherDownloads,
 } from "./types";
 
 const USER_TOKEN_KEY = "cybercraft_user_token";
@@ -163,6 +164,22 @@ export function useTopVoters() {
 
   return {
     topVoters: data || [],
+    isLoading,
+    isError: error,
+  };
+}
+
+export function useLauncherDownloads() {
+  const { data, error, isLoading } = useSWR<LauncherDownloads>(
+    "/launcher/downloads/",
+    publicFetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    downloads: data,
     isLoading,
     isError: error,
   };

@@ -126,6 +126,11 @@ class ApiClient {
     return this.fetch<import("./types").TopVoter[]>("/public/voting/top/");
   }
 
+  async getLauncherDownloads() {
+    return this.fetch<import("./types").LauncherDownloads>("/launcher/downloads/");
+  }
+
+
   async register(data: {
     username: string;
     email: string;

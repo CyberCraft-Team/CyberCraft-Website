@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Users,
   Server,
@@ -14,10 +15,13 @@ import { Button } from "@/components/ui/button";
 import { useStats } from "@/lib/api/hooks";
 import { ParticlesBackground } from "@/components/particles-background";
 import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
+import { LauncherDownloadModal } from "./launcher-download-modal";
 
 export function HeroSection() {
   const { stats, isLoading, isError } = useStats();
   const revealRef = useScrollRevealGroup({ threshold: 0.1, rootMargin: "0px" });
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+
 
   return (
     <section className="relative overflow-hidden min-h-[90vh] flex items-center justify-center">
@@ -159,7 +163,8 @@ export function HeroSection() {
           >
             <Button
               size="lg"
-              className="cyber-btn px-10 py-7 text-lg font-bold animate-pulse-glow group"
+              className="cyber-btn px-10 py-7 text-lg font-bold animate-pulse-glow group cursor-pointer"
+              onClick={() => setIsDownloadOpen(true)}
             >
               <Download className="w-5 h-5 mr-2 group-hover:animate-bounce" />
               LAUNCHER YUKLASH
@@ -175,6 +180,10 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+      <LauncherDownloadModal
+        isOpen={isDownloadOpen}
+        onClose={() => setIsDownloadOpen(false)}
+      />
     </section>
   );
 }
