@@ -60,6 +60,10 @@ export function Header() {
     const sectionIds = ["voting", "news", "servers"]; // bottom-to-top order
 
     const handleScroll = () => {
+      if (typeof window !== "undefined" && window.scrollY < 100) {
+        setActiveSection("/");
+        return;
+      }
       for (const id of sectionIds) {
         const el = document.getElementById(id);
         if (el) {

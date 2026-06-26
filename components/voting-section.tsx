@@ -160,7 +160,9 @@ export function VotingSection() {
                             ? "bg-[var(--primary)] text-[var(--bg-dark)]"
                             : voter.rank === 2
                               ? "bg-gray-400 text-[var(--bg-dark)]"
-                              : "bg-amber-700 text-[var(--bg-dark)]"
+                              : voter.rank === 3
+                                ? "bg-amber-700 text-[var(--bg-dark)]"
+                                : "bg-zinc-800 text-zinc-400"
                             }`}
                         >
                           {voter.rank}

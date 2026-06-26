@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -101,7 +101,7 @@ class ApiClient {
 
   async getServerManifest(serverId: number, token: string) {
     return this.fetch<import("./types").ServerManifest>(
-      `/servers/${serverId}/manifest/`,
+      `/launcher/servers/${serverId}/manifest/`,
       { token },
     );
   }

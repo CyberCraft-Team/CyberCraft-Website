@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import useSWR from "swr";
 import apiClient from "./client";
 import type {
@@ -64,7 +65,7 @@ export function removeAdminToken(): void {
 }
 
 const publicFetcher = async (endpoint: string): Promise<any> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
   const fullUrl = `${apiUrl}${endpoint}`;
 
   const response = await fetch(fullUrl);
@@ -192,7 +193,7 @@ export function useServerJars() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/minecraft/jars/?active_only=true`,
         {
           headers: {
@@ -223,30 +224,30 @@ export function useUserAuth() {
     },
   );
 
-  const login = async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const response = await apiClient.userLogin(username, password);
     setUserToken(response.token);
     mutate({ user: response.user });
     return response;
-  };
+  }, [mutate]);
 
-  const googleLogin = async (idToken: string, username?: string) => {
+  const googleLogin = useCallback(async (idToken: string, username?: string) => {
     const response = await apiClient.googleLogin(idToken, username);
     if (!response.needs_username) {
       setUserToken(response.token);
       mutate({ user: response.user });
     }
     return response;
-  };
+  }, [mutate]);
 
-  const telegramLogin = async (authData: any) => {
+  const telegramLogin = useCallback(async (authData: any) => {
     const response = await apiClient.telegramLogin(authData);
     setUserToken(response.token);
     mutate({ user: response.user });
     return response;
-  };
+  }, [mutate]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     const currentToken = getUserToken();
     if (currentToken) {
       try {
@@ -255,14 +256,14 @@ export function useUserAuth() {
     }
     removeUserToken();
     mutate(undefined);
-  };
+  }, [mutate]);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     const currentToken = getUserToken();
     if (currentToken) {
       await mutate();
     }
-  };
+  }, [mutate]);
 
   return {
     user: data?.user || null,
@@ -328,7 +329,7 @@ export function useAdminServers() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/minecraft/servers/`,
         {
           headers: {
@@ -359,7 +360,7 @@ export function useAdminServer(serverId: string) {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/minecraft/servers/${serverId}/`,
         {
           headers: {
@@ -388,7 +389,7 @@ export function useAdminNews() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/admin/news/`,
         {
           headers: {
@@ -421,7 +422,7 @@ export function useAdminUsers() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/admin/users/`,
         {
           headers: {
@@ -453,7 +454,7 @@ export function useAdminVotingSites() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/admin/voting/sites/`,
         {
           headers: {
@@ -485,7 +486,7 @@ export function useAdminPublicServers() {
     ([, authToken]) =>
       fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
         }/admin/servers/`,
         {
           headers: {

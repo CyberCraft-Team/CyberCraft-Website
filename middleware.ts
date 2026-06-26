@@ -6,7 +6,7 @@ const ADMIN_PATHS = ["/dashboard"];
 const AUTH_PAGES = ["/login", "/register"];
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -33,10 +33,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Dashboard pages — require admin auth (either admin token or user token)
+  // Dashboard pages — require admin auth (only adminToken allowed, and must be valid)
   const isAdminRoute = ADMIN_PATHS.some((path) => pathname.startsWith(path));
-  if (isAdminRoute && !adminToken && !userToken) {
-    return NextResponse.redirect(new URL("/admin-login", request.url));
+  if (isAdminRoute) {
+    if (!adminToken) {
+      return NextResponse.redirect(new URL("/admin-login", request.url));
+    }
+    const isValid = await verifyAdminToken(adminToken);
+    if (!isValid) {
+      const response = NextResponse.redirect(new URL("/admin-login", request.url));
+      response.cookies.delete("cybercraft_admin_token");
+      return response;
+    }
   }
 
   // If logged in AND token is valid, redirect away from auth pages
@@ -57,6 +65,17 @@ export async function middleware(request: NextRequest) {
 async function verifyUserToken(token: string): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/launcher/me/`, {
+      headers: { Authorization: `Token ${token}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function verifyAdminToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/admin/me/`, {
       headers: { Authorization: `Token ${token}` },
     });
     return res.ok;

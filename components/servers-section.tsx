@@ -141,10 +141,10 @@ export function ServersSection() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`w - 2.5 h - 2.5 rounded - full ${getStatusColor(server.status)} animate - pulse`}
+                        className={`w-2.5 h-2.5 rounded-full ${getStatusColor(server.status)} animate-pulse`}
                       />
                       <span
-                        className={`text - xs uppercase font - bold ${server.status === "online"
+                        className={`text-xs uppercase font-bold ${server.status === "online"
                             ? "text-green-400"
                             : server.status === "offline"
                               ? "text-red-500"
