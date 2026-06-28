@@ -240,10 +240,12 @@ export function useUserAuth() {
     return response;
   }, [mutate]);
 
-  const telegramLogin = useCallback(async (authData: any) => {
-    const response = await apiClient.telegramLogin(authData);
-    setUserToken(response.token);
-    mutate({ user: response.user });
+  const telegramLogin = useCallback(async (authData: any, username?: string) => {
+    const response = await apiClient.telegramLogin(authData, username);
+    if (!response.needs_username) {
+      setUserToken(response.token);
+      mutate({ user: response.user });
+    }
     return response;
   }, [mutate]);
 

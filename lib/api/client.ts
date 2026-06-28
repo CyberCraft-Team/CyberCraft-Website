@@ -356,14 +356,15 @@ class ApiClient {
     });
   }
 
-  async telegramLogin(authData: any) {
+  async telegramLogin(authData: any, username?: string) {
     return this.fetch<{
       token: string;
       user: import("./types").AdminUser;
       is_new_user: boolean;
+      needs_username?: boolean;
     }>("/auth/telegram-login/", {
       method: "POST",
-      body: JSON.stringify(authData),
+      body: JSON.stringify({ auth_data: authData, username }),
     });
   }
 }

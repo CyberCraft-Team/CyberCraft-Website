@@ -98,7 +98,7 @@ export default function GoogleLoginButton() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-[var(--bg-dark)] px-2 text-[var(--text-secondary)]">
-            Yoki Google orqali
+            Yoki
           </span>
         </div>
       </div>

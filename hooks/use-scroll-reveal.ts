@@ -48,18 +48,21 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
  * to child elements with data-reveal attribute.
  * Usage: <div ref={revealRef}> <div data-reveal="fade-up" data-delay="100">...</div> </div>
  */
-export function useScrollRevealGroup(options: ScrollRevealOptions = {}) {
+export function useScrollRevealGroup(options: ScrollRevealOptions = {}): any {
   const { threshold = 0.1, rootMargin = "0px 0px -40px 0px", triggerOnce = true } = options;
-  const containerRef = useRef<HTMLElement>(null);
+  const [element, setElement] = useState<HTMLElement | null>(null);
+
+  const ref = useCallback((node: HTMLElement | null) => {
+    setElement(node);
+  }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    if (!element) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          const children = container.querySelectorAll("[data-reveal]");
+          const children = element.querySelectorAll("[data-reveal]");
           children.forEach((child, i) => {
             const el = child as HTMLElement;
             const delay = el.dataset.delay ? parseInt(el.dataset.delay) : i * 100;
@@ -68,19 +71,19 @@ export function useScrollRevealGroup(options: ScrollRevealOptions = {}) {
             }, delay);
           });
           if (triggerOnce) {
-            observer.unobserve(container);
+            observer.unobserve(element);
           }
         }
       },
       { threshold, rootMargin }
     );
 
-    observer.observe(container);
+    observer.observe(element);
 
     return () => {
       observer.disconnect();
     };
-  }, [threshold, rootMargin, triggerOnce]);
+  }, [element, threshold, rootMargin, triggerOnce]);
 
-  return containerRef;
+  return ref;
 }
