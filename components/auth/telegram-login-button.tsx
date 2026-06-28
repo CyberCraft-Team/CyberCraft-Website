@@ -135,7 +135,7 @@ export default function TelegramLoginButton() {
         <div ref={containerRef} className={isLoading ? "opacity-50 pointer-events-none" : ""} />
       </div>
       
-      {isIp && (
+      {isIp && process.env.NODE_ENV === 'development' && (
         <div className="text-amber-500 text-xs text-center border border-amber-500/30 bg-amber-500/10 rounded-lg p-4 w-full max-w-sm mt-2">
           <p className="font-semibold mb-1 flex items-center justify-center gap-1">
             ⚠️ Telegram Login ishlamasligi mumkin
