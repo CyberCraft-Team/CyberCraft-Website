@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Users, Gamepad2, Loader2, WifiOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LauncherDownloadModal } from "./launcher-download-modal";
 import Image from "next/image";
 import { useServers } from "@/lib/api/hooks";
 import type { Server } from "@/lib/api/types";
@@ -9,6 +11,9 @@ import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
 
 export function ServersSection() {
   const { servers: apiServers, isLoading, isError } = useServers();
+  // The play button used to have no handler at all. Playing requires the
+  // desktop launcher, so it opens the same download modal as the hero CTA.
+  const [launcherOpen, setLauncherOpen] = useState(false);
   const headerRevealRef = useScrollRevealGroup({ threshold: 0.2 });
   const gridRevealRef = useScrollRevealGroup({ threshold: 0.05 });
 
@@ -43,6 +48,7 @@ export function ServersSection() {
   };
 
   return (
+    <>
     <section className="py-20 bg-gradient-to-b from-[var(--bg-dark)] to-[#0d1015]" id="servers">
       <div className="container mx-auto px-4">
         <div
@@ -200,6 +206,7 @@ export function ServersSection() {
                     <Button
                       className="cyber-btn w-full h-12 font-bold animate-pulse-glow"
                       disabled={server.status !== "online"}
+                      onClick={() => setLauncherOpen(true)}
                     >
                       <Gamepad2 className="w-5 h-5 mr-2" />
                       Launcherdan o'ynash
@@ -212,5 +219,10 @@ export function ServersSection() {
         )}
       </div>
     </section>
+      <LauncherDownloadModal
+        isOpen={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+      />
+    </>
   );
 }

@@ -193,9 +193,6 @@ export function VotingSection() {
                   </div>
                 )}
 
-                <Button className="w-full mt-6 cyber-btn">
-                  To'liq ro'yxat
-                </Button>
               </div>
             </div>
           </div>
