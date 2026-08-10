@@ -6,7 +6,6 @@ import type { UserMinimal } from "@/lib/api/types";
 
 interface AuthContextType {
     user: UserMinimal | null;
-    token: string | null;
     isLoading: boolean;
     isError: any;
     isAuthenticated: boolean;

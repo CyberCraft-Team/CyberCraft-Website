@@ -25,9 +25,7 @@ export default function NewsDetailPage() {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const apiUrl =
-                    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-                const res = await fetch(`${apiUrl}/public/news/${params.id}/`);
+                const res = await fetch(`/api/backend/public/news/${params.id}/`);
                 if (!res.ok) throw new Error("Yangilik topilmadi");
                 const data = await res.json();
                 setNews(data);

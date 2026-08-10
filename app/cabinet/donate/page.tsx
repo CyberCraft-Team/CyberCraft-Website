@@ -2,7 +2,7 @@
 
 import { useRanks } from "@/lib/api/hooks";
 import { useAuth } from "@/lib/auth-context";
-import { getUserToken } from "@/lib/api/hooks";
+
 import apiClient from "@/lib/api/client";
 import { Loader2, Crown, Star, ShoppingCart, Coins, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,11 @@ export default function DonatePage() {
   const [result, setResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handlePurchase = async (rankId: number, rankName: string) => {
-    const token = getUserToken();
-    if (!token) return;
 
     setPurchasing(rankId);
     setResult(null);
     try {
-      await apiClient.purchaseRank(token, rankId);
+      await apiClient.purchaseRank(rankId);
       setResult({ type: "success", message: `${rankName} rank muvaffaqiyatli sotib olindi!` });
     } catch (err: any) {
       setResult({ type: "error", message: err.message || "Sotib olishda xatolik" });

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAdminToken } from "@/lib/api/hooks";
+
 import { useAdminAuthContext } from "@/lib/admin-auth-context";
 import type { User } from "@/lib/api/types";
 
@@ -50,13 +50,10 @@ export default function UserDetailPage() {
   const [banModal, setBanModal] = useState(false);
   const [banReason, setBanReason] = useState("");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
   const fetchUser = async () => {
     try {
-      const token = getAdminToken();
-      const res = await fetch(`${apiUrl}/admin/users/${userId}/`, {
-        headers: { Authorization: `Token ${token}` },
+      const res = await fetch(`/api/backend/admin/users/${userId}/`, {
+        
       });
       if (!res.ok) throw new Error("Foydalanuvchi topilmadi");
       const data = await res.json();
@@ -81,12 +78,10 @@ export default function UserDetailPage() {
   const doAction = async (endpoint: string, body: object, key: string) => {
     setActionLoading(key);
     try {
-      const token = getAdminToken();
-      const res = await fetch(`${apiUrl}/admin/users/${userId}/${endpoint}/`, {
+      const res = await fetch(`/api/backend/admin/users/${userId}/${endpoint}/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
         },
         body: JSON.stringify(body),
       });

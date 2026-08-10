@@ -44,7 +44,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { getAdminToken } from "@/lib/api/hooks";
+
 import useSWR from "swr";
 import { minecraftAPI } from "@/lib/api/minecraft";
 
@@ -68,11 +68,9 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 const fetcher = async (url: string) => {
-  const token = getAdminToken();
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Token ${token}` } : {}),
     },
   });
   if (!response.ok) throw new Error("Failed to fetch");
@@ -160,11 +158,6 @@ export default function MinecraftServersPage() {
     setUploadProgress(0);
 
     try {
-      const token = getAdminToken();
-
-      if (!token) {
-        throw new Error("Avtorizatsiya tokeni topilmadi. Qayta login qiling.");
-      }
 
       let newServer: { id: string };
       if (archiveType === "zip" && zipFile) {
@@ -265,14 +258,12 @@ export default function MinecraftServersPage() {
   ) => {
     setActionLoading(serverId);
     try {
-      const token = getAdminToken();
       const response = await fetch(
         `${API_BASE_URL}/minecraft/servers/${serverId}/${action}/`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Token ${token}` } : {}),
           },
         },
       );
@@ -299,14 +290,12 @@ export default function MinecraftServersPage() {
       return;
 
     try {
-      const token = getAdminToken();
       const response = await fetch(
         `${API_BASE_URL}/minecraft/servers/${serverId}/`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Token ${token}` } : {}),
           },
         },
       );

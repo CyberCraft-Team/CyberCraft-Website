@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { getUserToken } from "@/lib/api/hooks";
+
 import apiClient from "@/lib/api/client";
 import {
   Loader2,
@@ -30,9 +30,7 @@ function EmailVerificationSection() {
     setSending(true);
     setResult(null);
     try {
-      const token = getUserToken();
-      if (!token) throw new Error("Token topilmadi");
-      const data = await apiClient.sendVerificationEmail(token);
+      const data = await apiClient.sendVerificationEmail();
       setResult({ type: "success", message: data.message });
     } catch (err: any) {
       setResult({ type: "error", message: err.message });
@@ -139,14 +137,10 @@ export default function SettingsPage() {
     setIsChanging(true);
     setResult(null);
     try {
-      const token = getUserToken();
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const res = await fetch(`${apiUrl}/auth/launcher/change-password/`, {
+      const res = await fetch(`/api/backend/auth/launcher/change-password/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
         },
         body: JSON.stringify({
           current_password: currentPassword,

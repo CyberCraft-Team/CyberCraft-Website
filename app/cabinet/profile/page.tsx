@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { useDailyBonusStatus, useReferralInfo, getUserToken } from "@/lib/api/hooks";
+import { useDailyBonusStatus, useReferralInfo } from "@/lib/api/hooks";
 import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload, Gift, Coins, Link2, Copy, Calendar, Shield, User, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -108,7 +108,7 @@ function StreakCalendar({ streak }: { streak: number }) {
 export default function CabinetProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, token, isLoading, refreshUser } = useAuth();
+  const { user, isLoading, refreshUser } = useAuth();
   const { bonusStatus, claimBonus, mutate: mutateBonusStatus } = useDailyBonusStatus();
   const { referralInfo } = useReferralInfo();
   const [isUploading, setIsUploading] = useState(false);
@@ -128,7 +128,7 @@ export default function CabinetProfilePage() {
 
   const handleSkinUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !token) return;
+    if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".png")) {
       toast({
@@ -142,7 +142,7 @@ export default function CabinetProfilePage() {
     setIsUploading(true);
 
     try {
-      const result = await apiClient.uploadSkin(token, file);
+      const result = await apiClient.uploadSkin(file);
       toast({
         title: "Muvaffaqiyat",
         description: result.message || "Skin muvaffaqiyatli yuklandi!",
@@ -372,13 +372,11 @@ export default function CabinetProfilePage() {
                     if (!file) return;
                     setIsUploading(true);
                     try {
-                      const token = getUserToken();
                       const formData = new FormData();
                       formData.append("cape", file);
-                      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-                      const res = await fetch(`${apiUrl}/auth/launcher/cape/`, {
+                      const res = await fetch(`/api/backend/auth/launcher/cape/`, {
                         method: "POST",
-                        headers: { Authorization: `Token ${token}` },
+                        
                         body: formData,
                       });
                       if (!res.ok) {

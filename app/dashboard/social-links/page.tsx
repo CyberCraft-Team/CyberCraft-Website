@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { getAdminToken } from "@/lib/api/hooks";
+
 import apiClient from "@/lib/api/client";
 import type { SocialLink } from "@/lib/api/types";
 import type { LucideIcon } from "lucide-react";
@@ -61,7 +61,6 @@ const emptyLink: Omit<SocialLink, "id"> = {
 };
 
 export default function SocialLinksPage() {
-    const token = getAdminToken();
     const [links, setLinks] = useState<SocialLink[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState<number | "new" | null>(null);
@@ -72,10 +71,9 @@ export default function SocialLinksPage() {
     const [success, setSuccess] = useState<string | null>(null);
 
     const fetchLinks = async () => {
-        if (!token) return;
         setIsLoading(true);
         try {
-            const data = await apiClient.getAdminSocialLinks(token);
+            const data = await apiClient.getAdminSocialLinks();
             setLinks(data);
         } catch (err) {
             setError("Social linklarni yuklashda xatolik");
@@ -86,10 +84,10 @@ export default function SocialLinksPage() {
 
     useEffect(() => {
         fetchLinks();
-    }, [token]);
+    }, []);
 
     const handleSubmit = async () => {
-        if (!token || !formData.name || !formData.url) {
+        if (!formData.name || !formData.url) {
             setError("Ism va URL to'ldirilishi shart");
             return;
         }
@@ -100,10 +98,10 @@ export default function SocialLinksPage() {
 
         try {
             if (editingId !== null) {
-                await apiClient.updateSocialLink(token, editingId, formData);
+                await apiClient.updateSocialLink(editingId, formData);
                 setSuccess("Social link yangilandi!");
             } else {
-                await apiClient.createSocialLink(token, formData);
+                await apiClient.createSocialLink(formData);
                 setSuccess("Social link qo'shildi!");
             }
             setShowForm(false);
@@ -134,11 +132,10 @@ export default function SocialLinksPage() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!token) return;
         if (!confirm("Bu social linkni o'chirishni xohlaysizmi?")) return;
 
         try {
-            await apiClient.deleteSocialLink(token, id);
+            await apiClient.deleteSocialLink(id);
             setSuccess("Social link o'chirildi!");
             await fetchLinks();
         } catch (err: any) {
@@ -147,9 +144,8 @@ export default function SocialLinksPage() {
     };
 
     const handleToggleActive = async (link: SocialLink) => {
-        if (!token) return;
         try {
-            await apiClient.updateSocialLink(token, link.id, {
+            await apiClient.updateSocialLink(link.id, {
                 is_active: !link.is_active,
             });
             await fetchLinks();

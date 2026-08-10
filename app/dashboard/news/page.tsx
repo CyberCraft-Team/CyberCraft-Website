@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminNews, getAdminToken } from "@/lib/api/hooks";
+import { useAdminNews } from "@/lib/api/hooks";
 
 interface NewsCategory {
   id: number;
@@ -68,14 +68,10 @@ export default function NewsPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const token = getAdminToken();
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/categories/`,
           {
-            headers: {
-              Authorization: `Token ${token}`,
-            },
-          },
+                      },
         );
         if (response.ok) {
           const data = await response.json();
@@ -97,7 +93,7 @@ export default function NewsPage() {
     fetchCategories();
   }, []);
 
-  const filteredNews = news.filter((item) =>
+  const filteredNews = news.filter((item: any) =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -117,7 +113,6 @@ export default function NewsPage() {
     setIsSubmitting(true);
 
     try {
-      const token = getAdminToken();
       const categoryId = parseInt(formData.category);
 
       // Validate category ID is a valid number
@@ -144,7 +139,6 @@ export default function NewsPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
           },
           body: JSON.stringify(requestBody),
         },
@@ -178,17 +172,13 @@ export default function NewsPage() {
     if (!confirm("Yangilikni o'chirishni tasdiqlaysizmi?")) return;
 
     try {
-      const token = getAdminToken();
       await fetch(
         `${
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         }/admin/news/${newsId}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Token ${token}`,
-          },
-        },
+                  },
       );
       mutate();
     } catch (error) {
@@ -373,7 +363,7 @@ export default function NewsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredNews.map((item) => (
+          {filteredNews.map((item: any) => (
             <Card
               key={item.id}
               className="group cyber-card border-[var(--border-color)] overflow-hidden hover:border-[var(--primary)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--primary)]/20 cursor-pointer"

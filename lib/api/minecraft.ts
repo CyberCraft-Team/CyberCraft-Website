@@ -1,25 +1,5 @@
-import { getAdminToken } from "./hooks";
+import { apiFetch, getWebSocketTicket } from "./fetcher";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_URL ||
-  (() => {
-    try {
-      const url = new URL(API_BASE_URL);
-      const wsProto = url.protocol === "https:" ? "wss:" : "ws:";
-      return `${wsProto}//${url.host}`;
-    } catch {
-      return typeof window !== "undefined"
-        ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
-        : "ws://localhost:8000";
-    }
-  })();
-
-const isApiAvailable = () => {
-  return true;
-};
 
 const DEFAULT_SERVER_TYPES = [
   {
@@ -71,80 +51,9 @@ async function fetchWithAuth<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
-  if (!isApiAvailable()) {
-    if (endpoint.includes("/mods")) return [] as T;
-    if (endpoint.includes("/files")) return [] as T;
-    if (endpoint.includes("/server-types")) return [] as T;
-    if (
-      endpoint.includes("/servers/") &&
-      !endpoint.includes("/mods") &&
-      !endpoint.includes("/files")
-    ) {
-      const serverId = endpoint.split("/servers/")[1]?.split("/")[0];
-      return {
-        id: serverId,
-        name: "Demo Server",
-        status: "stopped",
-        server_type: "vanilla",
-        minecraft_version: "1.20.4",
-        max_players: 20,
-        port: 25565,
-        memory: 2048,
-        created_at: new Date().toISOString(),
-        online_players: 0,
-      } as T;
-    }
-    if (endpoint.includes("/servers")) return [] as T;
-    return {} as T;
-  }
-
-  const token = getAdminToken();
-
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Token ${token}` } : {}),
-        ...options.headers,
-      },
-    });
-  } catch (error) {
-    console.warn(`API not reachable: ${endpoint}`);
-    if (endpoint.includes("/mods")) return [] as T;
-    if (endpoint.includes("/files")) return [] as T;
-    if (endpoint.includes("/servers")) return [] as T;
-    return {} as T;
-  }
-
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ error: "Unknown error" }));
-
-    if (typeof error === "object" && !error.error && !error.detail) {
-      const errorMessages = Object.entries(error)
-        .map(([key, value]) => {
-          if (Array.isArray(value)) return `${key}: ${value.join(", ")}`;
-          return `${key}: ${value}`;
-        })
-        .join("; ");
-      throw new Error(
-        errorMessages || `HTTP error! status: ${response.status}`,
-      );
-    }
-
-    throw new Error(
-      error.error || error.detail || `HTTP error! status: ${response.status}`,
-    );
-  }
-
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
+  // Endpoints here are written with a leading slash; the proxy helper wants
+  // them without one.
+  return apiFetch<T>(endpoint.replace(/^\/+/, ""), options);
 }
 
 export const minecraftAPI = {
@@ -197,18 +106,6 @@ export const minecraftAPI = {
     },
     onProgress?: (percent: number) => void,
   ) => {
-    const token = getAdminToken();
-
-    if (!token) {
-      throw new Error("Avtorizatsiya tokeni topilmadi");
-    }
-
-    console.log(
-      "[v0] uploadServerJar - Sending request to:",
-      `${API_BASE_URL}/minecraft/jars/`,
-    );
-    console.log("[v0] uploadServerJar - File:", file.name, file.size);
-    console.log("[v0] uploadServerJar - Data:", data);
 
     const formData = new FormData();
     formData.append("jar_file", file);
@@ -225,8 +122,7 @@ export const minecraftAPI = {
       text: string;
     }>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_BASE_URL}/minecraft/jars/`);
-      xhr.setRequestHeader("Authorization", `Token ${token}`);
+      xhr.open("POST", `/api/backend/minecraft/jars/`);
 
       if (onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -247,14 +143,8 @@ export const minecraftAPI = {
       xhr.send(formData);
     });
 
-    console.log(
-      "[v0] uploadServerJar - Response status:",
-      responsePayload.status,
-    );
-
     if (!responsePayload.ok) {
       const errorText = responsePayload.text;
-      console.log("[v0] uploadServerJar - Error response:", errorText);
       let error: any = {};
 
       try {
@@ -277,7 +167,6 @@ export const minecraftAPI = {
     }
 
     const result = JSON.parse(responsePayload.text);
-    console.log("[v0] uploadServerJar - Success response:", result);
     return result as import("./types").ServerJar;
   },
 
@@ -289,10 +178,6 @@ export const minecraftAPI = {
     archive: File,
     onProgress?: (percent: number) => void,
   ) => {
-    const token = getAdminToken();
-    if (!token) {
-      throw new Error("Avtorizatsiya tokeni topilmadi");
-    }
 
     const formData = new FormData();
     formData.append("name", data.name);
@@ -325,8 +210,7 @@ export const minecraftAPI = {
     return new Promise<import("./types").MinecraftServerDetail>(
       (resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${API_BASE_URL}/minecraft/servers/`);
-        xhr.setRequestHeader("Authorization", `Token ${token}`);
+        xhr.open("POST", `/api/backend/minecraft/servers/`);
 
         if (onProgress) {
           xhr.upload.onprogress = (event) => {
@@ -463,7 +347,6 @@ export const minecraftAPI = {
     version?: string,
     description?: string,
   ) => {
-    const token = getAdminToken();
     const formData = new FormData();
     formData.append("file", file);
     if (name) formData.append("name", name);
@@ -471,12 +354,9 @@ export const minecraftAPI = {
     if (description) formData.append("description", description);
 
     const response = await fetch(
-      `${API_BASE_URL}/minecraft/servers/${serverId}/mods/`,
+      `/api/backend/minecraft/servers/${serverId}/mods/`,
       {
         method: "POST",
-        headers: {
-          ...(token ? { Authorization: `Token ${token}` } : {}),
-        },
         body: formData,
       },
     );
@@ -535,18 +415,14 @@ export const minecraftAPI = {
     icon?: File,
     background?: File
   ) => {
-    const token = getAdminToken();
     const formData = new FormData();
     if (icon) formData.append("icon", icon);
     if (background) formData.append("background_image", background);
 
     const response = await fetch(
-      `${API_BASE_URL}/minecraft/servers/${serverId}/images/`,
+      `/api/backend/minecraft/servers/${serverId}/images/`,
       {
         method: "PATCH",
-        headers: {
-          ...(token ? { Authorization: `Token ${token}` } : {}),
-        },
         body: formData,
       }
     );
@@ -560,17 +436,13 @@ export const minecraftAPI = {
   },
 
   uploadGalleryImage: async (serverId: string, file: File) => {
-    const token = getAdminToken();
     const formData = new FormData();
     formData.append("image", file);
 
     const response = await fetch(
-      `${API_BASE_URL}/minecraft/servers/${serverId}/gallery/`,
+      `/api/backend/minecraft/servers/${serverId}/gallery/`,
       {
         method: "POST",
-        headers: {
-          ...(token ? { Authorization: `Token ${token}` } : {}),
-        },
         body: formData,
       }
     );
@@ -646,17 +518,21 @@ export class ServerConsole {
     this.connect();
   }
 
-  private connect() {
-    const wsUrl = WS_BASE_URL;
-    const token = getAdminToken();
-
-    if (!wsUrl || !token) {
+  private async connect() {
+    // The session cookie is HttpOnly, so the token cannot be read here and
+    // put in the query string. Exchange it for a short-lived, socket-only
+    // ticket instead.
+    let ticket: { token: string; origin: string };
+    try {
+      ticket = await getWebSocketTicket();
+    } catch {
       this.isWebSocketAvailable = false;
       this.startPolling();
       return;
     }
 
-    const fullWsUrl = `${wsUrl}/ws/server/${this.serverId}/console/?token=${token}`;
+    const wsOrigin = ticket.origin.replace(/^http/, "ws");
+    const fullWsUrl = `${wsOrigin}/ws/server/${this.serverId}/console/?token=${ticket.token}`;
 
     try {
       this.ws = new WebSocket(fullWsUrl);

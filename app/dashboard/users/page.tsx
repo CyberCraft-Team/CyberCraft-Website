@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAdminUsers, getAdminToken } from "@/lib/api/hooks";
+import { useAdminUsers } from "@/lib/api/hooks";
 import type { User } from "@/lib/api/types";
 
 export default function UsersPage() {
@@ -28,15 +28,13 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
-  const filteredUsers = users.filter(
-    (user) =>
+  const filteredUsers = users.filter((user: any) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleWhitelist = async (userId: number, currentStatus: boolean) => {
     try {
-      const token = getAdminToken();
       await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         }/admin/users/${userId}/whitelist/`,
@@ -44,7 +42,6 @@ export default function UsersPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
           },
           body: JSON.stringify({ is_whitelisted: !currentStatus }),
         }
@@ -57,7 +54,6 @@ export default function UsersPage() {
 
   const toggleOperator = async (userId: number, currentStatus: boolean) => {
     try {
-      const token = getAdminToken();
       await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         }/admin/users/${userId}/operator/`,
@@ -65,7 +61,6 @@ export default function UsersPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
           },
           body: JSON.stringify({ is_operator: !currentStatus }),
         }
@@ -125,7 +120,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: any) => (
                   <tr
                     key={user.id}
                     className="border-b border-[var(--border-color)] hover:bg-[var(--bg-dark)]/50 cursor-pointer transition-colors"

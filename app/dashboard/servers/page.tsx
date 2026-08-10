@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminPublicServers, getAdminToken } from "@/lib/api/hooks";
+import { useAdminPublicServers } from "@/lib/api/hooks";
 import type { Server as ServerType } from "@/lib/api/types";
 
 interface ServerFormData {
@@ -85,8 +85,7 @@ export default function PublicServersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const filteredServers = servers.filter(
-    (server) =>
+  const filteredServers = servers.filter((server: any) =>
       server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       server.ip_address.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -165,14 +164,12 @@ export default function PublicServersPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const token = getAdminToken();
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
           },
           body: JSON.stringify(formData),
         },
@@ -197,14 +194,12 @@ export default function PublicServersPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const token = getAdminToken();
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/${selectedServer.id}/`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
           },
           body: JSON.stringify(formData),
         },
@@ -228,15 +223,11 @@ export default function PublicServersPage() {
     if (!selectedServer) return;
     setIsSubmitting(true);
     try {
-      const token = getAdminToken();
       await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/${selectedServer.id}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Token ${token}`,
-          },
-        },
+                  },
       );
       mutate();
       setIsDeleteOpen(false);
@@ -506,7 +497,7 @@ export default function PublicServersPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredServers.map((server) => (
+          {filteredServers.map((server: any) => (
             <Card
               key={server.id}
               className="cyber-card border-[var(--border-color)] overflow-hidden hover:border-[var(--primary)]/50 transition-all"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { getUserToken } from "@/lib/api/hooks";
+
 import apiClient from "@/lib/api/client";
 import type { Notification } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
@@ -68,11 +68,9 @@ export default function NotificationsPage() {
     const [filter, setFilter] = useState<"all" | "unread">("all");
 
     const fetchNotifications = useCallback(async () => {
-        const token = getUserToken();
-        if (!token) return;
         setLoading(true);
         try {
-            const data = await apiClient.getNotifications(token);
+            const data = await apiClient.getNotifications();
             setNotifications(data);
         } catch {
         } finally {
@@ -85,10 +83,8 @@ export default function NotificationsPage() {
     }, [fetchNotifications]);
 
     const handleMarkRead = async (id: number) => {
-        const token = getUserToken();
-        if (!token) return;
         try {
-            await apiClient.markNotificationRead(token, id);
+            await apiClient.markNotificationRead(id);
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
             );
@@ -96,10 +92,8 @@ export default function NotificationsPage() {
     };
 
     const handleMarkAllRead = async () => {
-        const token = getUserToken();
-        if (!token) return;
         try {
-            await apiClient.markAllNotificationsRead(token);
+            await apiClient.markAllNotificationsRead();
             setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
         } catch { }
     };

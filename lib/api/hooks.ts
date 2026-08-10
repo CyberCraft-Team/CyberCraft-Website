@@ -2,274 +2,182 @@
 
 import { useCallback } from "react";
 import useSWR from "swr";
-import apiClient from "./client";
+
+import { apiFetch, swrFetcher } from "./fetcher";
 import type {
-  Server,
-  Stats,
-  News,
-  VotingSite,
-  TopVoter,
   AdminUser,
-  ServerJar,
-  UserMinimal,
-  Rank,
-  DailyBonusStatus,
-  ReferralInfo,
   CCTransaction,
-  DailyBonusClaimResponse,
-  RankPurchaseResponse,
-  SocialLink,
+  DailyBonusStatus,
   LauncherDownloads,
+  News,
+  Rank,
+  ReferralInfo,
+  Server,
+  SocialLink,
+  Stats,
+  TopVoter,
+  UserMinimal,
+  VotingSite,
 } from "./types";
 
-const USER_TOKEN_KEY = "cybercraft_user_token";
-const ADMIN_TOKEN_KEY = "cybercraft_admin_token";
+/**
+ * Data hooks.
+ *
+ * Every request goes to /api/backend on this app's own origin, where a route
+ * handler attaches the session token from the HttpOnly cookie. There are no
+ * token helpers here any more: the browser cannot read the credential, which
+ * is the point. SWR keys are therefore plain paths rather than
+ * [path, token] pairs.
+ */
 
-function setCookie(name: string, value: string, days = 30): void {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
+const noFocusRevalidate = { revalidateOnFocus: false } as const;
 
-function removeCookie(name: string): void {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-}
-
-export function getUserToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(USER_TOKEN_KEY);
-}
-
-export function setUserToken(token: string): void {
-  localStorage.setItem(USER_TOKEN_KEY, token);
-  setCookie(USER_TOKEN_KEY, token);
-}
-
-export function removeUserToken(): void {
-  localStorage.removeItem(USER_TOKEN_KEY);
-  removeCookie(USER_TOKEN_KEY);
-}
-
-export function getAdminToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem(USER_TOKEN_KEY);
-}
-
-export function setAdminToken(token: string): void {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token);
-  setCookie(ADMIN_TOKEN_KEY, token);
-}
-
-export function removeAdminToken(): void {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
-  removeCookie(ADMIN_TOKEN_KEY);
-}
-
-const publicFetcher = async (endpoint: string): Promise<any> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-  const fullUrl = `${apiUrl}${endpoint}`;
-
-  const response = await fetch(fullUrl);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data: ${response.status}`);
-  }
-
-  return response.json();
-};
+// ---------------------------------------------------------------------------
+// Public data
+// ---------------------------------------------------------------------------
 
 export function useServers() {
   const { data, error, isLoading, mutate } = useSWR<Server[]>(
-    "/public/servers/",
-    publicFetcher,
-    {
-      refreshInterval: 30000,
-      revalidateOnFocus: true,
-    },
+    "public/servers/",
+    swrFetcher,
+    { refreshInterval: 30000, ...noFocusRevalidate },
   );
-
-  return {
-    servers: data || [],
-    isLoading,
-    isError: error,
-    mutate,
-  };
+  return { servers: data || [], isLoading, isError: error, mutate };
 }
 
 export function useStats() {
-  const { data, error, isLoading } = useSWR<Stats>(
-    "/public/stats/",
-    publicFetcher,
-    {
-      refreshInterval: 10000,
-      revalidateOnFocus: true,
-    },
-  );
-
-  return {
-    stats: data,
-    isLoading,
-    isError: error,
-  };
+  const { data, error, isLoading } = useSWR<Stats>("public/stats/", swrFetcher, {
+    refreshInterval: 10000,
+    ...noFocusRevalidate,
+  });
+  return { stats: data, isLoading, isError: error };
 }
 
 export function useNews() {
-  const { data, error, isLoading } = useSWR<News[]>(
-    "/public/news/",
-    publicFetcher,
-    {
-      refreshInterval: 60000,
-    },
-  );
-
-  return {
-    news: data || [],
-    isLoading,
-    isError: error,
-  };
+  const { data, error, isLoading } = useSWR<News[]>("public/news/", swrFetcher, {
+    refreshInterval: 60000,
+    ...noFocusRevalidate,
+  });
+  return { news: data || [], isLoading, isError: error };
 }
 
 export function useVotingSites() {
   const { data, error, isLoading } = useSWR<VotingSite[]>(
-    "/public/voting/sites/",
-    publicFetcher,
+    "public/voting/sites/",
+    swrFetcher,
+    noFocusRevalidate,
   );
-
-  return {
-    votingSites: data || [],
-    isLoading,
-    isError: error,
-  };
+  return { votingSites: data || [], isLoading, isError: error };
 }
 
 export function useSocialLinks() {
   const { data, error, isLoading } = useSWR<SocialLink[]>(
-    "/public/social-links/",
-    publicFetcher,
+    "public/social-links/",
+    swrFetcher,
+    noFocusRevalidate,
   );
-
-  return {
-    socialLinks: data || [],
-    isLoading,
-    isError: error,
-  };
+  return { socialLinks: data || [], isLoading, isError: error };
 }
 
 export function useTopVoters() {
   const { data, error, isLoading } = useSWR<TopVoter[]>(
-    "/public/voting/top/",
-    publicFetcher,
-    {
-      refreshInterval: 60000,
-    },
+    "public/voting/top/",
+    swrFetcher,
+    { refreshInterval: 60000, ...noFocusRevalidate },
   );
-
-  return {
-    topVoters: data || [],
-    isLoading,
-    isError: error,
-  };
+  return { topVoters: data || [], isLoading, isError: error };
 }
 
 export function useLauncherDownloads() {
   const { data, error, isLoading } = useSWR<LauncherDownloads>(
-    "/launcher/downloads/",
-    publicFetcher,
-    {
-      revalidateOnFocus: false,
-    }
+    "launcher/downloads/",
+    swrFetcher,
+    noFocusRevalidate,
   );
-
-  return {
-    downloads: data,
-    isLoading,
-    isError: error,
-  };
+  return { downloads: data, isLoading, isError: error };
 }
 
-export function useServerJars() {
-  const token = getAdminToken();
-  const { data, error, isLoading } = useSWR<ServerJar[]>(
-    token ? ["/minecraft/jars/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/minecraft/jars/?active_only=true`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  return {
-    serverJars: data || [],
-    isLoading,
-    isError: error,
-  };
+export function useRanks() {
+  const { data, error, isLoading } = useSWR<Rank[]>("rewards/ranks/", swrFetcher, {
+    ...noFocusRevalidate,
+  });
+  return { ranks: data || [], isLoading, isError: error };
 }
+
+// ---------------------------------------------------------------------------
+// Authentication
+//
+// The session lives in an HttpOnly cookie, so these hooks ask the server who
+// the visitor is rather than reading a token. A 401 simply means "logged
+// out" and must not be retried.
+// ---------------------------------------------------------------------------
+
+async function meFetcher<T>(url: string): Promise<T | null> {
+  const response = await fetch(url, { credentials: "same-origin" });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Failed to load session (${response.status})`);
+  return response.json();
+}
+
+const sessionOptions = {
+  ...noFocusRevalidate,
+  shouldRetryOnError: false,
+} as const;
 
 export function useUserAuth() {
-  const token = getUserToken();
-
-  const { data, error, isLoading, mutate } = useSWR<{ user: UserMinimal }>(
-    token ? ["/auth/launcher/me/", token] : null,
-    ([, authToken]) => apiClient.getUserMe(authToken as string),
-    {
-      revalidateOnFocus: false,
-    },
+  const { data, error, isLoading, mutate } = useSWR<{ user: UserMinimal } | null>(
+    "/api/auth/me",
+    meFetcher,
+    sessionOptions,
   );
 
-  const login = useCallback(async (username: string, password: string) => {
-    const response = await apiClient.userLogin(username, password);
-    setUserToken(response.token);
-    mutate({ user: response.user });
-    return response;
-  }, [mutate]);
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const result = await postJson<{ user: UserMinimal }>("/api/auth/login", {
+        username,
+        password,
+      });
+      await mutate({ user: result.user });
+      return result;
+    },
+    [mutate],
+  );
 
-  const googleLogin = useCallback(async (idToken: string, username?: string) => {
-    const response = await apiClient.googleLogin(idToken, username);
-    if (!response.needs_username) {
-      setUserToken(response.token);
-      mutate({ user: response.user });
-    }
-    return response;
-  }, [mutate]);
+  const googleLogin = useCallback(
+    async (idToken: string, username?: string) => {
+      const result = await postJson<any>("/api/auth/google", {
+        id_token: idToken,
+        ...(username ? { username } : {}),
+      });
+      if (!result.needs_username) await mutate({ user: result.user });
+      return result;
+    },
+    [mutate],
+  );
 
-  const telegramLogin = useCallback(async (authData: any, username?: string) => {
-    const response = await apiClient.telegramLogin(authData, username);
-    if (!response.needs_username) {
-      setUserToken(response.token);
-      mutate({ user: response.user });
-    }
-    return response;
-  }, [mutate]);
+  const telegramLogin = useCallback(
+    async (authData: unknown, username?: string) => {
+      const result = await postJson<any>("/api/auth/telegram", {
+        auth_data: authData,
+        ...(username ? { username } : {}),
+      });
+      if (!result.needs_username) await mutate({ user: result.user });
+      return result;
+    },
+    [mutate],
+  );
 
   const logout = useCallback(async () => {
-    const currentToken = getUserToken();
-    if (currentToken) {
-      try {
-        await apiClient.userLogout(currentToken);
-      } catch (e) {}
-    }
-    removeUserToken();
-    mutate(undefined);
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+    await mutate(null);
   }, [mutate]);
 
   const refreshUser = useCallback(async () => {
-    const currentToken = getUserToken();
-    if (currentToken) {
-      await mutate();
-    }
+    await mutate();
   }, [mutate]);
 
   return {
-    user: data?.user || null,
-    token,
+    user: data?.user ?? null,
     isLoading,
     isError: error,
     isAuthenticated: !!data?.user,
@@ -282,37 +190,34 @@ export function useUserAuth() {
 }
 
 export function useAdminAuth() {
-  const token = getAdminToken();
-
-  const { data, error, isLoading, mutate } = useSWR<{ user: AdminUser }>(
-    token ? ["/auth/admin/me/", token] : null,
-    ([, authToken]) => apiClient.getAdminMe(authToken as string),
-    {
-      revalidateOnFocus: false,
-    },
+  const { data, error, isLoading, mutate } = useSWR<{ user: AdminUser } | null>(
+    "/api/auth/admin/me",
+    meFetcher,
+    sessionOptions,
   );
 
-  const login = async (username: string, password: string) => {
-    const response = await apiClient.adminLogin(username, password);
-    setAdminToken(response.token);
-    mutate({ user: response.user });
-    return response;
-  };
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const result = await postJson<{ user: AdminUser }>("/api/auth/admin/login", {
+        username,
+        password,
+      });
+      await mutate({ user: result.user });
+      return result;
+    },
+    [mutate],
+  );
 
-  const logout = async () => {
-    const currentToken = getAdminToken();
-    if (currentToken) {
-      try {
-        await apiClient.adminLogout(currentToken);
-      } catch (e) {}
-    }
-    removeAdminToken();
-    removeUserToken();
-    mutate(undefined);
-  };
+  const logout = useCallback(async () => {
+    await fetch("/api/auth/admin/logout", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    await mutate(null);
+  }, [mutate]);
 
   return {
-    user: data?.user || null,
+    user: data?.user ?? null,
     isLoading,
     isError: error,
     isAuthenticated: !!data?.user,
@@ -322,273 +227,87 @@ export function useAdminAuth() {
   };
 }
 
-export function useAdminServers() {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<
-    import("./types").MinecraftServer[]
-  >(
-    token ? ["/minecraft/servers/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/minecraft/servers/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 10000,
-    },
-  );
-
-  return {
-    servers: data || [],
-    isLoading,
-    isError: error,
-    mutate,
-  };
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    credentials: "same-origin",
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(
+      (payload && (payload.error || payload.detail)) || "So'rov bajarilmadi",
+    );
+  }
+  return payload as T;
 }
 
-export function useAdminServer(serverId: string) {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<
-    import("./types").MinecraftServerDetail
-  >(
-    token && serverId ? [`/minecraft/servers/${serverId}/`, token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/minecraft/servers/${serverId}/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 5000,
-    },
-  );
-
-  return {
-    server: data,
-    isLoading,
-    isError: error,
-    mutate,
-  };
-}
-
-export function useAdminNews() {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<any>(
-    token ? ["/admin/news/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/admin/news/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 30000,
-    },
-  );
-
-  const news: import("./types").News[] = Array.isArray(data)
-    ? data
-    : data?.results || [];
-
-  return {
-    news,
-    isLoading,
-    isError: error,
-    mutate,
-  };
-}
-
-export function useAdminUsers() {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<any>(
-    token ? ["/admin/users/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/admin/users/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  const users: import("./types").User[] = Array.isArray(data)
-    ? data
-    : data?.results || [];
-
-  return {
-    users,
-    isLoading,
-    isError: error,
-    mutate,
-  };
-}
-
-export function useAdminVotingSites() {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<any>(
-    token ? ["/admin/voting/sites/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/admin/voting/sites/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  const votingSites: import("./types").VotingSite[] = Array.isArray(data)
-    ? data
-    : data?.results || [];
-
-  return {
-    votingSites,
-    isLoading,
-    isError: error,
-    mutate,
-  };
-}
-
-export function useAdminPublicServers() {
-  const token = getAdminToken();
-  const { data, error, isLoading, mutate } = useSWR<any>(
-    token ? ["/admin/servers/", token] : null,
-    ([, authToken]) =>
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
-        }/admin/servers/`,
-        {
-          headers: {
-            Authorization: `Token ${authToken}`,
-          },
-        },
-      ).then((res) => res.json()),
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  const servers: import("./types").Server[] = Array.isArray(data)
-    ? data
-    : data?.results || [];
-
-  return {
-    servers,
-    isLoading,
-    isError: error,
-    mutate,
-  };
-}
-
-// Rewards Hooks
-export function useRanks() {
-  const { data, error, isLoading } = useSWR<any>(
-    "/rewards/ranks/",
-    publicFetcher,
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  const ranks: Rank[] = Array.isArray(data) ? data : data?.results || [];
-
-  return {
-    ranks,
-    isLoading,
-    isError: error,
-  };
-}
+// ---------------------------------------------------------------------------
+// Authenticated data
+// ---------------------------------------------------------------------------
 
 export function useDailyBonusStatus() {
-  const token = getUserToken();
   const { data, error, isLoading, mutate } = useSWR<DailyBonusStatus>(
-    token ? ["/rewards/daily-bonus/status/", token] : null,
-    ([, authToken]) => apiClient.getDailyBonusStatus(authToken as string),
-    {
-      revalidateOnFocus: false,
-    },
+    "rewards/daily-bonus/status/",
+    swrFetcher,
+    sessionOptions,
   );
-
-  const claimBonus = async () => {
-    const currentToken = getUserToken();
-    if (!currentToken) throw new Error("Not authenticated");
-    const result = await apiClient.claimDailyBonus(currentToken);
-    mutate();
+  const claimBonus = useCallback(async () => {
+    const result = await apiFetch<any>("rewards/daily-bonus/", { method: "POST" });
+    await mutate();
     return result;
-  };
+  }, [mutate]);
 
-  return {
-    bonusStatus: data,
-    isLoading,
-    isError: error,
-    claimBonus,
-    mutate,
-  };
+  return { bonusStatus: data, isLoading, isError: error, mutate, claimBonus };
 }
 
 export function useReferralInfo() {
-  const token = getUserToken();
   const { data, error, isLoading } = useSWR<ReferralInfo>(
-    token ? ["/rewards/referral/", token] : null,
-    ([, authToken]) => apiClient.getReferralInfo(authToken as string),
-    {
-      revalidateOnFocus: false,
-    },
+    "rewards/referral/",
+    swrFetcher,
+    sessionOptions,
   );
-
-  return {
-    referralInfo: data,
-    isLoading,
-    isError: error,
-  };
+  return { referralInfo: data, isLoading, isError: error };
 }
 
 export function useCCTransactions() {
-  const token = getUserToken();
-  const { data, error, isLoading } = useSWR<CCTransaction[]>(
-    token ? ["/rewards/transactions/", token] : null,
-    ([, authToken]) => apiClient.getCCTransactions(authToken as string),
-    {
-      revalidateOnFocus: false,
-    },
+  const { data, error, isLoading, mutate } = useSWR<CCTransaction[]>(
+    "rewards/transactions/",
+    swrFetcher,
+    sessionOptions,
   );
+  return { transactions: data || [], isLoading, isError: error, mutate };
+}
 
+export function useAdminNews() {
+  const { data, error, isLoading, mutate } = useSWR<any>(
+    "admin/news/",
+    swrFetcher,
+    { refreshInterval: 30000, ...sessionOptions },
+  );
+  return { news: data?.results || data || [], isLoading, isError: error, mutate };
+}
+
+export function useAdminUsers() {
+  const { data, error, isLoading, mutate } = useSWR<any>(
+    "admin/users/",
+    swrFetcher,
+    sessionOptions,
+  );
+  return { users: data?.results || data || [], isLoading, isError: error, mutate };
+}
+
+export function useAdminPublicServers() {
+  const { data, error, isLoading, mutate } = useSWR<any>(
+    "admin/servers/",
+    swrFetcher,
+    sessionOptions,
+  );
   return {
-    transactions: data || [],
+    servers: data?.results || data || [],
     isLoading,
     isError: error,
+    mutate,
   };
 }
