@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import GoogleLoginButton from "@/components/auth/google-login-button";
 import TelegramLoginButton from "@/components/auth/telegram-login-button";
+import { buildLauncherCallback } from "@/lib/launcher-callback";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -28,9 +29,9 @@ export default function LoginPage() {
     try {
       const response = await login(username, password);
       const searchParams = new URLSearchParams(window.location.search);
-      const callback = searchParams.get("callback");
-      if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
-        window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+      const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
       } else {
         router.push("/");
       }

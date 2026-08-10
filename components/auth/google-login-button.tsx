@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { Loader2, AlertCircle, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { buildLauncherCallback } from "@/lib/launcher-callback";
 
 /**
  * Google kirish tugmasi.
@@ -40,9 +41,9 @@ export default function GoogleLoginButton() {
           setShowModal(true);
         } else {
           const searchParams = new URLSearchParams(window.location.search);
-          const callback = searchParams.get("callback");
-          if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
-            window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+          const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
           } else if (window.location.pathname === "/admin-login") {
             window.location.href = "/dashboard";
           } else {
@@ -74,9 +75,9 @@ export default function GoogleLoginButton() {
       } else {
         setShowModal(false);
         const searchParams = new URLSearchParams(window.location.search);
-        const callback = searchParams.get("callback");
-        if (callback && (callback.startsWith("http://localhost:") || callback.startsWith("http://127.0.0.1:"))) {
-          window.location.href = `${callback}?token=${response.token}&username=${response.user.username}`;
+        const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
         } else if (window.location.pathname === "/admin-login") {
           window.location.href = "/dashboard";
         } else {
