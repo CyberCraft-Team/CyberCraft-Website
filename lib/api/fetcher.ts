@@ -59,7 +59,13 @@ export async function apiFetch<T = unknown>(
     body = JSON.stringify(json);
   }
 
-  const response = await fetch(`${PROXY}/${path.replace(/^\/+/, "")}`, {
+  // Next redirects a trailing slash away with a 308, so paths are sent
+  // without one and the proxy re-adds it for Django. Keeping it here cost an
+  // extra round-trip on every single request.
+  const [rawPath, query] = path.replace(/^\/+/, "").split("?");
+  const proxyPath = rawPath.replace(/\/+$/, "") + (query ? `?${query}` : "");
+
+  const response = await fetch(`${PROXY}/${proxyPath}`, {
     ...rest,
     headers: finalHeaders,
     body,

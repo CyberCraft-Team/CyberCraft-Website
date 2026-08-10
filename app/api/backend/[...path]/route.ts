@@ -43,8 +43,14 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
   const scope = scopeForPath(path);
   const token = await getToken(scope);
 
+  // Django runs with APPEND_SLASH, so the path must always end in a slash
+  // *before* the query string. Appending it only when there is no query --
+  // as an earlier version did -- made every request with parameters bounce
+  // through a 301, which drops the body on POST and points the browser at a
+  // backend path it cannot reach.
   const search = request.nextUrl.search;
-  const target = `${BACKEND_URL}/${path}${path.endsWith("/") || search ? "" : "/"}${search}`;
+  const withSlash = path.endsWith("/") ? path : `${path}/`;
+  const target = `${BACKEND_URL}/${withSlash}${search}`;
 
   const headers = new Headers();
   request.headers.forEach((value, key) => {
