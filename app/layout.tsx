@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
@@ -48,6 +49,10 @@ export default function RootLayout({
       >
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
           <AuthProvider>{children}</AuthProvider>
+          {/* Without this every toast() call was a silent no-op: the profile
+              page raised them for skin uploads, cape uploads, bonus claims
+              and referral copies, and none of them ever appeared. */}
+          <Toaster />
         </GoogleOAuthProvider>
       </body>
     </html>
