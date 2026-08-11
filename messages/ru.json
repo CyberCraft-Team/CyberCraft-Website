@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "siteName": "CyberCraft",
+    "title": "CyberCraft - Minecraft серверы",
+    "description": "CyberCraft - лучшая платформа Minecraft серверов. Игровые серверы, модпаки и сильное сообщество.",
+    "keywords": "minecraft,сервер,cybercraft,minecraft сервер,узбекистан minecraft,minecraft uz",
+    "ogLocale": "ru_RU"
+  },
+  "nav": {
+    "home": "Главная",
+    "servers": "Серверы",
+    "news": "Новости",
+    "voting": "Голосование",
+    "shop": "Магазин",
+    "forum": "Форум",
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "cabinet": "Кабинет",
+    "launcher": "Лаунчер"
+  },
+  "footer": {
+    "tagline": "Лучший комплекс Minecraft серверов в Узбекистане. Технические моды, выживание и множество других режимов!",
+    "sectionServer": "Сервер",
+    "sectionHelp": "Помощь",
+    "sectionContact": "Контакты",
+    "rules": "Правила",
+    "faq": "FAQ",
+    "support": "Поддержка",
+    "contact": "Контакты",
+    "privacy": "Политика конфиденциальности",
+    "terms": "Условия использования",
+    "contactLoading": "Загрузка контактов...",
+    "copyright": "© 2024-2026 CyberCraft. Все права защищены.",
+    "disclaimer": "Minecraft разработан Mojang Studios. CyberCraft не является официальным продуктом Mojang.",
+    "servers": "Серверы",
+    "news": "Новости",
+    "shop": "Магазин",
+    "forum": "Форум"
+  },
+  "notFound": {
+    "title": "Страница не найдена",
+    "description": "Запрошенная страница не существует или ещё не готова.",
+    "home": "Главная",
+    "news": "Новости"
+  },
+  "newsIndex": {
+    "title": "НОВОСТИ",
+    "subtitle": "Новости и объявления сервера",
+    "back": "Вернуться на главную",
+    "loading": "Загрузка новостей...",
+    "error": "Не удалось загрузить новости. Попробуйте позже.",
+    "empty": "Новостей пока нет."
+  },
+  "locale": {
+    "switch": "Язык",
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
+  }
+}

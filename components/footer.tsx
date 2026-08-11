@@ -1,28 +1,31 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
 import { Youtube, Send, MessageCircle, Gamepad2, ExternalLink, Globe, Music, Instagram, Twitter } from "lucide-react";
 import { useSocialLinks } from "@/lib/api/hooks";
 import type { SocialLink } from "@/lib/api/types";
 import type { LucideIcon } from "lucide-react";
 import { useScrollRevealGroup } from "@/hooks/use-scroll-reveal";
 
+// Labels come from the message catalogue; only the hrefs live here.
 const links = {
   server: [
-    { name: "Serverlar", href: "#servers" },
-    { name: "Yangiliklar", href: "#news" },
-    { name: "Do'kon", href: "/shop" },
-    { name: "Forum", href: "/forum" },
+    { key: "servers", href: "#servers" },
+    { key: "news", href: "#news" },
+    { key: "shop", href: "/shop" },
+    { key: "forum", href: "/forum" },
   ],
   help: [
-    { name: "Qoidalar", href: "/rules" },
-    { name: "FAQ", href: "/faq" },
-    { name: "Yordam", href: "/support" },
-    { name: "Aloqa", href: "/contact" },
+    { key: "rules", href: "/rules" },
+    { key: "faq", href: "/faq" },
+    { key: "support", href: "/support" },
+    { key: "contact", href: "/contact" },
   ],
   legal: [
-    { name: "Maxfiylik siyosati", href: "/privacy" },
-    { name: "Foydalanish shartlari", href: "/terms" },
+    { key: "privacy", href: "/privacy" },
+    { key: "terms", href: "/terms" },
   ],
 };
 
@@ -56,6 +59,7 @@ function getSocialColor(link: SocialLink): string {
 }
 
 export function Footer() {
+  const t = useTranslations("footer");
   const { socialLinks } = useSocialLinks();
   const revealRef = useScrollRevealGroup({ threshold: 0.1 });
 
@@ -78,9 +82,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-[var(--text-secondary)] mb-6 max-w-sm leading-relaxed">
-              O'zbekistondagi eng yaxshi Minecraft server kompleksi.
-              Texnik modlar, survival va boshqa ko'plab rejimlar!
-            </p>
+              {t("tagline")}</p>
             {socialLinks.length > 0 && (
               <div className="flex gap-3">
                 {socialLinks.map((social) => {
@@ -105,16 +107,16 @@ export function Footer() {
           {/* Server Links */}
           <div data-reveal="fade-up" data-delay="150">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
-              Server
+              {t("sectionServer")}
             </h4>
             <ul className="space-y-3">
               {links.server.map((link) => (
-                <li key={link.name}>
+                <li key={link.key}>
                   <Link
                     href={link.href}
                     className="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors flex items-center gap-1 group"
                   >
-                    {link.name}
+                    {t(link.key)}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </li>
@@ -125,16 +127,16 @@ export function Footer() {
           {/* Help Links */}
           <div data-reveal="fade-up" data-delay="300">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
-              Yordam
+              {t("sectionHelp")}
             </h4>
             <ul className="space-y-3">
               {links.help.map((link) => (
-                <li key={link.name}>
+                <li key={link.key}>
                   <Link
                     href={link.href}
                     className="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors flex items-center gap-1 group"
                   >
-                    {link.name}
+                    {t(link.key)}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </li>
@@ -145,7 +147,7 @@ export function Footer() {
           {/* Contact — dynamic from social links */}
           <div data-reveal="fade-up" data-delay="450">
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
-              Aloqa
+              {t("sectionContact")}
             </h4>
             <ul className="space-y-3 text-[var(--text-secondary)]">
               {socialLinks.map((social) => (
@@ -158,7 +160,7 @@ export function Footer() {
               ))}
               {socialLinks.length === 0 && (
                 <li className="text-[var(--text-secondary)] text-sm opacity-50">
-                  Aloqa ma'lumotlari yuklanmoqda...
+                  {t("contactLoading")}
                 </li>
               )}
             </ul>
@@ -169,22 +171,22 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-[var(--border-color)]">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-[var(--text-secondary)]">
-              © 2024-2026 <span className="text-[var(--primary)]">CyberCraft</span>. Barcha huquqlar himoyalangan.
+              {t("copyright")}
             </p>
             <div className="flex items-center gap-4">
               {links.legal.map((link) => (
                 <Link
-                  key={link.name}
+                  key={link.key}
                   href={link.href}
                   className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
-                  {link.name}
+                  {t(link.key)}
                 </Link>
               ))}
             </div>
           </div>
           <p className="text-xs text-[var(--text-secondary)]/60 mt-4 text-center md:text-left">
-            Minecraft - Mojang Studios tomonidan ishlab chiqilgan. CyberCraft rasmiy Mojang mahsuloti emas.
+            {t("disclaimer")}
           </p>
         </div>
       </div>

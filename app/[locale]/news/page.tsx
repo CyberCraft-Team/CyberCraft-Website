@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
 import { ArrowLeft, Calendar, Loader2, Newspaper } from "lucide-react";
 
 import { Header } from "@/components/header";
@@ -16,6 +18,7 @@ import { useNews } from "@/lib/api/hooks";
  * visitor who followed them hit a 404.
  */
 export default function NewsIndexPage() {
+  const t = useTranslations("newsIndex");
   const { news, isLoading, isError } = useNews();
 
   return (
@@ -28,28 +31,28 @@ export default function NewsIndexPage() {
           className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Bosh sahifaga qaytish
+          {t("back")}
         </Link>
 
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-black gradient-text mb-3">
-            YANGILIKLAR
+            {t("title")}
           </h1>
           <p className="text-[var(--text-secondary)]">
-            Server yangiliklari va e&apos;lonlar
+            {t("subtitle")}
           </p>
         </div>
 
         {isLoading && (
           <div className="flex items-center justify-center py-24 text-[var(--text-secondary)]">
             <Loader2 className="w-6 h-6 animate-spin mr-3" />
-            Yangiliklar yuklanmoqda...
+            {t("loading")}
           </div>
         )}
 
         {isError && !isLoading && (
           <div className="cyber-card p-10 text-center text-[var(--text-secondary)]">
-            Yangiliklarni yuklab bo&apos;lmadi. Keyinroq urinib ko&apos;ring.
+            {t("error")}
           </div>
         )}
 
@@ -57,7 +60,7 @@ export default function NewsIndexPage() {
           <div className="cyber-card p-10 text-center">
             <Newspaper className="w-10 h-10 mx-auto mb-4 text-[var(--text-secondary)]" />
             <p className="text-[var(--text-secondary)]">
-              Hozircha yangiliklar yo&apos;q.
+              {t("empty")}
             </p>
           </div>
         )}

@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "siteName": "CyberCraft",
+    "title": "CyberCraft - Minecraft Servers",
+    "description": "CyberCraft - the best Minecraft server platform. Game servers, modpacks and a strong community.",
+    "keywords": "minecraft,server,cybercraft,minecraft server,uzbekistan minecraft,minecraft uz",
+    "ogLocale": "en_US"
+  },
+  "nav": {
+    "home": "Home",
+    "servers": "Servers",
+    "news": "News",
+    "voting": "Voting",
+    "shop": "Shop",
+    "forum": "Forum",
+    "login": "Sign in",
+    "register": "Sign up",
+    "logout": "Sign out",
+    "cabinet": "Account",
+    "launcher": "Launcher"
+  },
+  "footer": {
+    "tagline": "The best Minecraft server network in Uzbekistan. Tech mods, survival and many other modes.",
+    "sectionServer": "Server",
+    "sectionHelp": "Help",
+    "sectionContact": "Contact",
+    "rules": "Rules",
+    "faq": "FAQ",
+    "support": "Support",
+    "contact": "Contact",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "contactLoading": "Loading contact details...",
+    "copyright": "© 2024-2026 CyberCraft. All rights reserved.",
+    "disclaimer": "Minecraft is developed by Mojang Studios. CyberCraft is not an official Mojang product.",
+    "servers": "Servers",
+    "news": "News",
+    "shop": "Shop",
+    "forum": "Forum"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist, or is not ready yet.",
+    "home": "Home",
+    "news": "News"
+  },
+  "newsIndex": {
+    "title": "NEWS",
+    "subtitle": "Server news and announcements",
+    "back": "Back to home",
+    "loading": "Loading news...",
+    "error": "Could not load the news. Please try again later.",
+    "empty": "No news yet."
+  },
+  "locale": {
+    "switch": "Language",
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
+  }
+}

@@ -10,7 +10,6 @@ import {
   Server,
   Newspaper,
   Users,
-  Settings,
   LogOut,
   ChevronRight,
   Loader2,
@@ -28,7 +27,6 @@ const sidebarLinks = [
   { href: "/dashboard/servers", icon: Server, label: "Public Serverlar" },
   { href: "/dashboard/news", icon: Newspaper, label: "Yangiliklar" },
   { href: "/dashboard/users", icon: Users, label: "Foydalanuvchilar" },
-  { href: "/dashboard/settings", icon: Settings, label: "Sozlamalar" },
 ];
 
 function DashboardContent({

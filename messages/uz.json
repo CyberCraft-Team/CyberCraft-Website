@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "siteName": "CyberCraft",
+    "title": "CyberCraft - Minecraft Serverlari",
+    "description": "CyberCraft - eng yaxshi Minecraft serverlari platformasi. O'yin serverlari, modpacklar, va kuchli jamoa.",
+    "keywords": "minecraft,server,cybercraft,minecraft server,uzbekistan minecraft,minecraft uz",
+    "ogLocale": "uz_UZ"
+  },
+  "nav": {
+    "home": "Bosh sahifa",
+    "servers": "Serverlar",
+    "news": "Yangiliklar",
+    "voting": "Ovoz berish",
+    "shop": "Do'kon",
+    "forum": "Forum",
+    "login": "Kirish",
+    "register": "Ro'yxatdan o'tish",
+    "logout": "Chiqish",
+    "cabinet": "Kabinet",
+    "launcher": "Launcher"
+  },
+  "footer": {
+    "tagline": "O'zbekistondagi eng yaxshi Minecraft server kompleksi. Texnik modlar, survival va boshqa ko'plab rejimlar!",
+    "sectionServer": "Server",
+    "sectionHelp": "Yordam",
+    "sectionContact": "Aloqa",
+    "rules": "Qoidalar",
+    "faq": "FAQ",
+    "support": "Yordam",
+    "contact": "Aloqa",
+    "privacy": "Maxfiylik siyosati",
+    "terms": "Foydalanish shartlari",
+    "contactLoading": "Aloqa ma'lumotlari yuklanmoqda...",
+    "copyright": "© 2024-2026 CyberCraft. Barcha huquqlar himoyalangan.",
+    "disclaimer": "Minecraft - Mojang Studios tomonidan ishlab chiqilgan. CyberCraft rasmiy Mojang mahsuloti emas.",
+    "servers": "Serverlar",
+    "news": "Yangiliklar",
+    "shop": "Do'kon",
+    "forum": "Forum"
+  },
+  "notFound": {
+    "title": "Sahifa topilmadi",
+    "description": "Siz qidirgan sahifa mavjud emas yoki hali tayyor emas.",
+    "home": "Bosh sahifa",
+    "news": "Yangiliklar"
+  },
+  "newsIndex": {
+    "title": "YANGILIKLAR",
+    "subtitle": "Server yangiliklari va e'lonlar",
+    "back": "Bosh sahifaga qaytish",
+    "loading": "Yangiliklar yuklanmoqda...",
+    "error": "Yangiliklarni yuklab bo'lmadi. Keyinroq urinib ko'ring.",
+    "empty": "Hozircha yangiliklar yo'q."
+  },
+  "locale": {
+    "switch": "Til",
+    "uz": "O'zbekcha",
+    "ru": "Русский",
+    "en": "English"
+  }
+}
