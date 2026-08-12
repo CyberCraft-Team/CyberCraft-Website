@@ -17,7 +17,8 @@
     "register": "Sign up",
     "logout": "Sign out",
     "cabinet": "Account",
-    "launcher": "Launcher"
+    "launcher": "Launcher",
+    "loading": "Loading"
   },
   "footer": {
     "tagline": "The best Minecraft server network in Uzbekistan. Tech mods, survival and many other modes.",

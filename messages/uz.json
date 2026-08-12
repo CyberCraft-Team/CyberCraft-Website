@@ -17,7 +17,8 @@
     "register": "Ro'yxatdan o'tish",
     "logout": "Chiqish",
     "cabinet": "Kabinet",
-    "launcher": "Launcher"
+    "launcher": "Launcher",
+    "loading": "Yuklanmoqda"
   },
   "footer": {
     "tagline": "O'zbekistondagi eng yaxshi Minecraft server kompleksi. Texnik modlar, survival va boshqa ko'plab rejimlar!",

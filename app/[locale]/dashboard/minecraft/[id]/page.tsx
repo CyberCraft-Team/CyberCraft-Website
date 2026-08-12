@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   ArrowLeft,
   Play,

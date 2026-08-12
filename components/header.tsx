@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
@@ -24,17 +24,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useTranslations } from "next-intl";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
-const navLinks: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/", label: "Bosh sahifa", icon: Home },
-  { href: "/#servers", label: "Serverlar", icon: Server },
-  { href: "/#news", label: "Yangiliklar", icon: Newspaper },
-  { href: "/#voting", label: "Ovoz berish", icon: Vote },
-  { href: "/shop", label: "Do'kon", icon: ShoppingCart },
-  { href: "/forum", label: "Forum", icon: MessageSquare },
+// Labels are message keys in the "nav" namespace, not literals.
+const navLinks: { href: string; key: string; icon: LucideIcon }[] = [
+  { href: "/", key: "home", icon: Home },
+  { href: "/#servers", key: "servers", icon: Server },
+  { href: "/#news", key: "news", icon: Newspaper },
+  { href: "/#voting", key: "voting", icon: Vote },
+  { href: "/shop", key: "shop", icon: ShoppingCart },
+  { href: "/forum", key: "forum", icon: MessageSquare },
 ];
 
 export function Header() {
+  const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState("/");
@@ -162,7 +166,7 @@ export function Header() {
       return (
         <Button className="cyber-btn px-6" disabled>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Yuklanmoqda
+          {t("loading")}
         </Button>
       );
     }
@@ -183,7 +187,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="text-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10"
-                title="Dashboard"
+                title={t("cabinet")}
               >
                 <LayoutDashboard className="w-5 h-5" />
               </Button>
@@ -228,7 +232,7 @@ export function Header() {
       <Link href="/login">
         <Button className="cyber-btn px-6">
           <User className="w-4 h-4 mr-2" />
-          Kirish
+          {t("login")}
         </Button>
       </Link>
     );
@@ -239,7 +243,7 @@ export function Header() {
       return (
         <Button className="flex-1 cyber-btn" disabled>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Yuklanmoqda
+          {t("loading")}
         </Button>
       );
     }
@@ -251,7 +255,7 @@ export function Header() {
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Chiqish
+          {t("logout")}
         </Button>
       );
     }
@@ -260,7 +264,7 @@ export function Header() {
       <Link href="/login" className="flex-1">
         <Button className="w-full cyber-btn">
           <User className="w-4 h-4 mr-2" />
-          Kirish
+          {t("login")}
         </Button>
       </Link>
     );
@@ -302,7 +306,7 @@ export function Header() {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               );
             })}
@@ -319,9 +323,10 @@ export function Header() {
               className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--bg-dark)] bg-transparent transition-all duration-300"
             >
               <Download className="w-4 h-4 mr-2" />
-              Launcher
+              {t("launcher")}
             </Button>
 
+            <LocaleSwitcher />
             {renderAuthSection()}
           </div>
 
@@ -356,7 +361,7 @@ export function Header() {
                     }`}
                   >
                     <Icon className="w-4 h-4" />
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 );
               })}
@@ -376,9 +381,12 @@ export function Header() {
                   className="flex-1 border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[var(--primary)] hover:text-[var(--bg-dark)]"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Launcher
+                  {t("launcher")}
                 </Button>
                 {renderMobileAuthSection()}
+              </div>
+              <div className="flex justify-center pt-2">
+                <LocaleSwitcher />
               </div>
             </nav>
           </div>

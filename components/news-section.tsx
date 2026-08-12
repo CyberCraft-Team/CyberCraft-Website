@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, ChevronRight, Newspaper, Loader2, Tag, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { useNews } from "@/lib/api/hooks";
 import type { News } from "@/lib/api/types";
