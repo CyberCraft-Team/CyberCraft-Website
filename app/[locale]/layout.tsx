@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AuthProvider } from "@/lib/auth-context";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ExtensionAttributeGuard } from "@/components/extension-attribute-guard";
 import { Toaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 import "./globals.css";
@@ -64,6 +65,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <ExtensionAttributeGuard />
+      </head>
       <body
         className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
