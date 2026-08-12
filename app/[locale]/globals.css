@@ -1,33 +1,47 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
-  --primary: #00f0ff;
+  /* Brand. Hues are unchanged -- cyan 184, green 152, pink 337. Only
+     lightness is graded, so cyan leads and the other two recede. Before this,
+     the green was L* 88.6 (the brightest thing on the page after white) while
+     the pink was L* 54.1, which put a status colour above the brand. */
+  --primary: #00f0ff;      /* L* 86.8 */
   --primary-dark: #00a8b3;
-  --secondary: #ff0060;
-  --accent: #00ff88;
-  --warning: #ffaa00;
-  --error: #ff4444;
-  --bg-dark: #0a0a0f;
-  --bg-card: #12121a;
-  --bg-sidebar: #0d0d14;
+  --secondary: #ff6fa6;    /* was #ff0060 -- L* 54.1 -> 66.0 */
+  --accent: #0ac46d;       /* was #00ff88 -- L* 88.6 -> 69.9 */
+
+  /* Status. Each hue is tuned separately: at full saturation green sits
+     about 30 L* points above red, so one shared lightness does not work. */
+  --success: #0ac46d;      /* L* 69.9 */
+  --warning: #e79c06;      /* was #ffaa00 -- L* 70.0 */
+  --error: #ff5c5c;        /* was #ff4444 -- L* 61.4 */
+  --info: #00f0ff;         /* L* 86.8 */
+
+  /* Surfaces. Every step is a visible L* increment, and the ladder now runs
+     the right way: an input sits below its card, a popover above it. */
+  --bg-dark: #08080c;        /* L*  2.3  page */
+  --surface-sunken: #0b0b12; /* L*  3.2  input, textarea */
+  --bg-card: #101019;        /* L*  5.0  card, panel */
+  --surface-raised: #171722; /* L*  8.2  popover, dropdown, modal */
+  --bg-sidebar: #0b0b12;
+  --border-color: #26263b;   /* L* 16.1 */
+
   --text-primary: #ffffff;
   --text-secondary: #8888aa;
-  --border-color: #1a1a2e;
   --glow-color: rgba(0, 240, 255, 0.3);
 
-  --background: #0a0a0f;
+  /* shadcn aliases over the same ladder. */
+  --background: #08080c;
   --foreground: #ffffff;
-  --card: #12121a;
+  --card: #101019;
   --card-foreground: #ffffff;
-  --popover: #0d0d14;
+  --popover: #171722;
   --popover-foreground: #ffffff;
-  --muted: #1a1a2e;
+  --muted: #1b1b28;          /* L* 10.3 -- no longer equal to --border */
   --muted-foreground: #8888aa;
-  --border: #1a1a2e;
-  --input: #12121a;
+  --border: #26263b;
+  --input: #0b0b12;          /* no longer equal to --card */
   --ring: #00f0ff;
   --radius: 0.75rem;
 }
@@ -55,6 +69,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--bg-dark);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--bg-dark);
+  --color-error: var(--error);
+  --color-error-foreground: var(--bg-dark);
+  --color-info: var(--info);
+  --color-info-foreground: var(--bg-dark);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -213,8 +237,8 @@ section {
 
 .glow-box-pink {
   box-shadow:
-    0 0 20px rgba(255, 0, 96, 0.3),
-    inset 0 0 20px rgba(255, 0, 96, 0.05);
+    0 0 20px color-mix(in srgb, var(--secondary) 30%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--secondary) 5%, transparent);
 }
 
 .glass {
@@ -313,7 +337,7 @@ section {
 
 .status-offline {
   background: var(--error);
-  box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--error) 50%, transparent);
 }
 
 .cyber-card {
