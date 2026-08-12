@@ -11,6 +11,16 @@ const alertVariants = cva(
         default: 'bg-card text-card-foreground',
         destructive:
           'text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
+        // The callout idiom the codebase wrote by hand in more than a hundred
+        // places: a tinted fill, a stronger border, matching text.
+        error:
+          'bg-error/10 border-error/30 text-error *:data-[slot=alert-description]:text-error/90',
+        success:
+          'bg-success/10 border-success/30 text-success *:data-[slot=alert-description]:text-success/90',
+        warning:
+          'bg-warning/10 border-warning/30 text-warning *:data-[slot=alert-description]:text-warning/90',
+        info:
+          'bg-info/10 border-info/30 text-info *:data-[slot=alert-description]:text-info/90',
       },
     },
     defaultVariants: {
