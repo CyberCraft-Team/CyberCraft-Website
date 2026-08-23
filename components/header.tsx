@@ -219,7 +219,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10"
+            className="text-[var(--text-secondary)] hover:text-error hover:bg-error/10"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4" />
@@ -251,7 +251,7 @@ export function Header() {
     if (isAuthenticated && user) {
       return (
         <Button
-          className="flex-1 bg-red-500/20 text-red-500 hover:bg-red-500/30"
+          className="flex-1 bg-error/20 text-error hover:bg-error/30"
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 mr-2" />

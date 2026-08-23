@@ -22,11 +22,11 @@ export function ServersSection() {
       case "online":
         return "status-online";
       case "offline":
-        return "bg-red-500";
+        return "bg-error";
       case "maintenance":
-        return "bg-yellow-500";
+        return "bg-warning";
       default:
-        return "bg-gray-500";
+        return "bg-muted";
     }
   };
 
@@ -151,10 +151,10 @@ export function ServersSection() {
                       />
                       <span
                         className={`text-xs uppercase font-bold ${server.status === "online"
-                            ? "text-green-400"
+                            ? "text-success"
                             : server.status === "offline"
-                              ? "text-red-500"
-                              : "text-yellow-500"
+                              ? "text-error"
+                              : "text-warning"
                           } `}
                       >
                         {getStatusText(server.status)}

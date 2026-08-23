@@ -53,8 +53,8 @@ export function HeroSection() {
           >
             {isError ? (
               <>
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span className="text-sm text-red-400 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-error" />
+                <span className="text-sm text-error font-medium">
                   Serverga ulanib bo'lmadi
                 </span>
               </>
@@ -149,7 +149,7 @@ export function HeroSection() {
 
           {/* Error message */}
           {isError && (
-            <div className="flex items-center justify-center gap-2 mb-6 text-red-400 text-sm">
+            <div className="flex items-center justify-center gap-2 mb-6 text-error text-sm">
               <AlertTriangle className="w-4 h-4" />
               <span>API serveriga ulanishda xatolik yuz berdi</span>
             </div>

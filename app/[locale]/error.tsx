@@ -43,7 +43,7 @@ export default function GlobalError({
                     <p className="text-[var(--text-secondary)] mb-2">
                         Kutilmagan xatolik yuz berdi. Iltimos, sahifani qayta yuklang yoki keyinroq urinib ko'ring.
                     </p>
-                    <p className="text-xs text-red-500/80 font-mono bg-red-950/20 p-3 rounded-lg border border-red-500/20 mb-6 max-h-40 overflow-y-auto break-all">
+                    <p className="text-xs text-error/80 font-mono bg-error/10 p-3 rounded-lg border border-error/20 mb-6 max-h-40 overflow-y-auto break-all">
                         {error?.message || String(error)}
                     </p>
 

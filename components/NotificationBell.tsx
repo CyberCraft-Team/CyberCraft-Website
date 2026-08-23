@@ -17,11 +17,14 @@ const typeIcons: Record<string, React.ElementType> = {
 };
 
 const typeColors: Record<string, string> = {
-    info: "text-blue-400",
-    success: "text-emerald-400",
-    warning: "text-amber-400",
+    info: "text-info",
+    success: "text-success",
+    warning: "text-warning",
     reward: "text-[var(--primary)]",
-    system: "text-purple-400",
+    // The system type was purple, a sixth hue family carrying one category.
+    // typeIcons above already gives it the Settings icon, so the distinction
+    // survives without a colour of its own.
+    system: "text-muted-foreground",
 };
 
 function timeAgo(dateStr: string): string {
@@ -112,7 +115,7 @@ export function NotificationBell() {
             >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[var(--secondary)] text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
                         {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                 )}
@@ -163,7 +166,7 @@ export function NotificationBell() {
                         ) : (
                             notifications.map((notif) => {
                                 const Icon = typeIcons[notif.notification_type] || Info;
-                                const color = typeColors[notif.notification_type] || "text-blue-400";
+                                const color = typeColors[notif.notification_type] || "text-info";
                                 return (
                                     <div
                                         key={notif.id}
