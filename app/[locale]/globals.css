@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Keep the dark variant pinned to a class that is never applied.
+   This looks like dead code and is not. Tailwind 4's built-in dark variant is
+   @media (prefers-color-scheme: dark), and 17 files carry shadcn dark:
+   utilities -- dark:bg-input/30, dark:bg-destructive/60, dark:border-input and
+   the rest. Drop this line and those all switch on for anyone whose OS prefers
+   dark, so the same input renders translucent for them and opaque for everyone
+   else. This site has exactly one theme; nothing should depend on an OS
+   setting. Removing it was tried and measured: the login input came back as
+   oklab(... / 0.3) under a dark OS and rgb(8, 8, 12) under a light one. */
+@custom-variant dark (&:is(.dark *));
+
 :root {
   /* Brand. Hues are unchanged -- cyan 184, green 152, pink 337. Only
      lightness is graded, so cyan leads and the other two recede. Before this,
@@ -100,8 +111,16 @@ html {
   outline: none;
 }
 
-* {
-  @apply border-border outline-ring/50;
+/* This must stay inside @layer base. Unlayered declarations beat every layered
+   one regardless of specificity, and Tailwind 4 puts utilities in a real
+   @layer utilities -- so an unlayered universal selector silently overrode
+   every border-<colour> utility on the site. border-error/30,
+   border-success/30 and even the pre-existing border-red-500/30 all rendered
+   as plain --border-color. Measured, not guessed. */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
 }
 
 body {
@@ -242,7 +261,10 @@ section {
 }
 
 .glass {
-  background: rgba(18, 18, 26, 0.8);
+  /* Was rgba(18, 18, 26, 0.8) -- the old --bg-card, frozen in place. Six
+     panels kept rendering at the pre-rebalance lightness while everything
+     around them moved. */
+  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
 }
