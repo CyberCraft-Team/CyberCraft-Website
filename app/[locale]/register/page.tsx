@@ -129,8 +129,8 @@ export default function RegisterPage() {
 
         <div className="relative w-full max-w-md">
           <div className="cyber-card p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-success" />
             </div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
               Muvaffaqiyatli ro'yxatdan o'tdingiz!
@@ -190,7 +190,7 @@ export default function RegisterPage() {
           </div>
 
           {errors.general && (
-            <div className="flex items-center gap-2 p-4 mb-6 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500">
+            <div className="flex items-center gap-2 p-4 mb-6 bg-error/10 border border-error/30 rounded-lg text-error">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <span className="text-sm">{errors.general[0]}</span>
             </div>
@@ -210,13 +210,13 @@ export default function RegisterPage() {
                   placeholder="O'yindagi ismingiz"
                   value={formData.username}
                   onChange={handleChange}
-                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.username ? "border-red-500" : ""
+                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.username ? "border-error" : ""
                     }`}
                   required
                 />
               </div>
               {errors.username && (
-                <p className="text-red-500 text-sm">{errors.username[0]}</p>
+                <p className="text-error text-sm">{errors.username[0]}</p>
               )}
               <p className="text-xs text-[var(--text-secondary)]/70">
                 3-16 ta belgi. Bu sizning Minecraft username'ingiz bo'ladi
@@ -236,13 +236,13 @@ export default function RegisterPage() {
                   placeholder="Email kiriting"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.email ? "border-red-500" : ""
+                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.email ? "border-error" : ""
                     }`}
                   required
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email[0]}</p>
+                <p className="text-error text-sm">{errors.email[0]}</p>
               )}
             </div>
 
@@ -259,13 +259,13 @@ export default function RegisterPage() {
                   placeholder="Parol kiriting"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.password ? "border-red-500" : ""
+                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.password ? "border-error" : ""
                     }`}
                   required
                 />
               </div>
               {errors.password && (
-                <p className="text-red-500 text-sm">{errors.password[0]}</p>
+                <p className="text-error text-sm">{errors.password[0]}</p>
               )}
             </div>
 
@@ -282,13 +282,13 @@ export default function RegisterPage() {
                   placeholder="Parolni qayta kiriting"
                   value={formData.password_confirm}
                   onChange={handleChange}
-                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.password_confirm ? "border-red-500" : ""
+                  className={`pl-12 h-12 bg-[var(--bg-dark)] border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--primary)] ${errors.password_confirm ? "border-error" : ""
                     }`}
                   required
                 />
               </div>
               {errors.password_confirm && (
-                <p className="text-red-500 text-sm">
+                <p className="text-error text-sm">
                   {errors.password_confirm[0]}
                 </p>
               )}
@@ -301,7 +301,7 @@ export default function RegisterPage() {
               </label>
 
               {!skinFile ? (
-                <label className={`flex flex-col items-center justify-center h-28 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--primary)] bg-[var(--bg-dark)]/50 rounded-xl cursor-pointer transition-all group ${errors.skin ? "border-red-500" : ""}`}>
+                <label className={`flex flex-col items-center justify-center h-28 border-2 border-dashed border-[var(--border-color)] hover:border-[var(--primary)] bg-[var(--bg-dark)]/50 rounded-xl cursor-pointer transition-all group ${errors.skin ? "border-error" : ""}`}>
                   <Upload className="w-7 h-7 text-[var(--text-secondary)]/70 group-hover:text-[var(--primary)] transition-colors mb-2" />
                   <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                     Skin faylini yuklang (.png)
@@ -336,7 +336,7 @@ export default function RegisterPage() {
                     <Button
                       type="button"
                       variant="ghost"
-                      className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-8 px-2 text-xs"
+                      className="text-error hover:text-error hover:bg-error/10 h-8 px-2 text-xs"
                       onClick={() => {
                         setSkinFile(null);
                         setSkinPreview(null);
@@ -348,7 +348,7 @@ export default function RegisterPage() {
                 )
               )}
               {errors.skin && (
-                <p className="text-red-500 text-sm">{errors.skin[0]}</p>
+                <p className="text-error text-sm">{errors.skin[0]}</p>
               )}
             </div>
 

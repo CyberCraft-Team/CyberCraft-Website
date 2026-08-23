@@ -105,7 +105,7 @@ export default function GoogleLoginButton() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
+        <div className="flex items-center gap-2 p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -150,7 +150,7 @@ export default function GoogleLoginButton() {
             </div>
 
             {modalError && (
-              <div className="flex items-center gap-2 p-3 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
+              <div className="flex items-center gap-2 p-3 mb-4 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{modalError}</span>
               </div>

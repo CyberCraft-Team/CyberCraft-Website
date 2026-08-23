@@ -56,8 +56,8 @@ function VerifyEmailContent() {
 
             {statusState === "success" && (
                 <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                        <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    <div className="w-16 h-16 mx-auto rounded-full bg-success/10 border border-success/30 flex items-center justify-center">
+                        <CheckCircle className="w-8 h-8 text-success" />
                     </div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">
                         Email muvaffaqiyatli tasdiqlandi!
@@ -82,13 +82,13 @@ function VerifyEmailContent() {
 
             {statusState === "error" && (
                 <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+                    <div className="w-16 h-16 mx-auto rounded-full bg-error/10 border border-error/30 flex items-center justify-center">
+                        <AlertCircle className="w-8 h-8 text-error" />
                     </div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">
                         Tasdiqlash amalga oshmadi
                     </h2>
-                    <p className="text-red-400/90 text-sm px-4 bg-red-950/20 py-3 rounded-lg border border-red-500/10 font-mono">
+                    <p className="text-error/90 text-sm px-4 bg-error/10 py-3 rounded-lg border border-error/10 font-mono">
                         {message}
                     </p>
                     <p className="text-[var(--text-secondary)] text-xs">

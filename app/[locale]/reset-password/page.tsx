@@ -51,8 +51,8 @@ function ResetPasswordForm() {
         <div className="cyber-card p-8">
             {success ? (
                 <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                        <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    <div className="w-16 h-16 mx-auto rounded-full bg-success/10 border border-success/30 flex items-center justify-center">
+                        <CheckCircle className="w-8 h-8 text-success" />
                     </div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">
                         Parol muvaffaqiyatli o'zgartirildi!
@@ -78,14 +78,14 @@ function ResetPasswordForm() {
                     </div>
 
                     {error && (
-                        <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                        <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-error/10 border border-error/30 text-error text-sm">
                             <AlertCircle className="w-4 h-4 shrink-0" />
                             {error}
                         </div>
                     )}
 
                     {!token && (
-                        <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
+                        <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-warning/10 border border-warning/30 text-warning text-sm">
                             <AlertCircle className="w-4 h-4 shrink-0" />
                             Havola noto'g'ri yoki token topilmadi
                         </div>

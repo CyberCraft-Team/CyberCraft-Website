@@ -137,21 +137,21 @@ export default function TelegramLoginButton() {
       </div>
       
       {isIp && process.env.NODE_ENV === 'development' && (
-        <div className="text-amber-500 text-xs text-center border border-amber-500/30 bg-amber-500/10 rounded-lg p-4 w-full max-w-sm mt-2">
+        <div className="text-warning text-xs text-center border border-warning/30 bg-warning/10 rounded-lg p-4 w-full max-w-sm mt-2">
           <p className="font-semibold mb-1 flex items-center justify-center gap-1">
             ⚠️ Telegram Login ishlamasligi mumkin
           </p>
-          <p className="text-[11px] leading-relaxed text-amber-500/80">
+          <p className="text-[11px] leading-relaxed text-warning/80">
             Telegram widget IP-manzilda (127.0.0.1) ishlamaydi. Buni to'g'irlash uchun saytga <strong>localhost:3000</strong> orqali kiring.
           </p>
-          <a href={localUrl} className="inline-block mt-2.5 px-4 py-1.5 bg-amber-500 text-black font-semibold rounded text-[11px] hover:bg-amber-400 transition-colors">
+          <a href={localUrl} className="inline-block mt-2.5 px-4 py-1.5 bg-warning text-black font-semibold rounded text-[11px] hover:brightness-110 transition-all">
             localhost ga o'tish
           </a>
         </div>
       )}
 
       {error && (
-        <p className="text-red-500 text-xs text-center">{error}</p>
+        <p className="text-error text-xs text-center">{error}</p>
       )}
 
       {/* Username Tanlash Modal oynasi */}
@@ -171,7 +171,7 @@ export default function TelegramLoginButton() {
             </div>
 
             {modalError && (
-              <div className="flex items-center gap-2 p-3 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
+              <div className="flex items-center gap-2 p-3 mb-4 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{modalError}</span>
               </div>
