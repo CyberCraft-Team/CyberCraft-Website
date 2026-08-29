@@ -133,10 +133,10 @@ export function useUserAuth() {
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const result = await postJson<{ user: UserMinimal }>("/api/auth/login", {
-        username,
-        password,
-      });
+      const result = await postJson<{ user: UserMinimal }>(
+        `/api/auth/login${window.location.search}`,
+        { username, password },
+      );
       await mutate({ user: result.user });
       return result;
     },
@@ -145,7 +145,7 @@ export function useUserAuth() {
 
   const googleLogin = useCallback(
     async (idToken: string, username?: string) => {
-      const result = await postJson<any>("/api/auth/google", {
+      const result = await postJson<any>(`/api/auth/google${window.location.search}`, {
         id_token: idToken,
         ...(username ? { username } : {}),
       });
@@ -157,7 +157,7 @@ export function useUserAuth() {
 
   const telegramLogin = useCallback(
     async (authData: unknown, username?: string) => {
-      const result = await postJson<any>("/api/auth/telegram", {
+      const result = await postJson<any>(`/api/auth/telegram${window.location.search}`, {
         auth_data: authData,
         ...(username ? { username } : {}),
       });

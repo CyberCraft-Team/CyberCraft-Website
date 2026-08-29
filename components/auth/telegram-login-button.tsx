@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2, AlertCircle, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buildLauncherCallback } from "@/lib/launcher-callback";
  
 interface TelegramUser {
   id: number;
@@ -48,10 +47,8 @@ export default function TelegramLoginButton() {
         setShowModal(true);
       } else {
         setShowModal(false);
-        const searchParams = new URLSearchParams(window.location.search);
-        const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
-          if (callbackUrl) {
-            window.location.href = callbackUrl;
+        if (response.callbackUrl) {
+          window.location.href = response.callbackUrl;
         } else if (window.location.pathname === "/admin-login") {
           window.location.href = "/dashboard";
         } else {

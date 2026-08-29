@@ -6,7 +6,6 @@ import { useState, useCallback } from "react";
 import { Loader2, AlertCircle, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buildLauncherCallback } from "@/lib/launcher-callback";
 
 /**
  * Google kirish tugmasi.
@@ -39,16 +38,12 @@ export default function GoogleLoginButton() {
         if (response.needs_username) {
           setTempCredential(credential);
           setShowModal(true);
+        } else if (response.callbackUrl) {
+          window.location.href = response.callbackUrl;
+        } else if (window.location.pathname === "/admin-login") {
+          window.location.href = "/dashboard";
         } else {
-          const searchParams = new URLSearchParams(window.location.search);
-          const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
-          if (callbackUrl) {
-            window.location.href = callbackUrl;
-          } else if (window.location.pathname === "/admin-login") {
-            window.location.href = "/dashboard";
-          } else {
-            window.location.href = "/";
-          }
+          window.location.href = "/";
         }
       } catch (err: any) {
         setError(err.message || "Google orqali kirishda xatolik yuz berdi");
@@ -74,10 +69,8 @@ export default function GoogleLoginButton() {
         setModalError("Username kiritilishi shart");
       } else {
         setShowModal(false);
-        const searchParams = new URLSearchParams(window.location.search);
-        const callbackUrl = buildLauncherCallback(searchParams, response.token, response.user.username);
-          if (callbackUrl) {
-            window.location.href = callbackUrl;
+        if (response.callbackUrl) {
+          window.location.href = response.callbackUrl;
         } else if (window.location.pathname === "/admin-login") {
           window.location.href = "/dashboard";
         } else {
