@@ -88,7 +88,12 @@ export default function NewsIndexPage() {
                     className="self-start text-xs px-2 py-1 rounded mb-3 border"
                     style={{
                       color: item.category.color || "var(--primary)",
-                      borderColor: `${item.category.color || "#00f0ff"}55`,
+                      // The alpha suffix only works on a literal hex, so the
+                      // token fallback needs color-mix rather than a
+                      // concatenated string.
+                      borderColor: item.category.color
+                        ? `${item.category.color}55`
+                        : "color-mix(in srgb, var(--primary) 33%, transparent)",
                     }}
                   >
                     {item.category.name}

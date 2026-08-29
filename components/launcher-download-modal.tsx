@@ -187,7 +187,7 @@ export function LauncherDownloadModal({
                               v{release.version}
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--secondary)]/10 border border-[var(--secondary)]/20 text-[var(--secondary)]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--primary)]/[0.06] border border-[var(--secondary)]/20 text-[var(--secondary)]">
                               Tez kunda
                             </span>
                           )}

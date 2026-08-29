@@ -68,9 +68,11 @@ export function HeroSection() {
             )}
           </div>
 
+          {/* Press Start 2P runs roughly twice as wide per glyph as a
+              normal sans, so the hero drops to about 45% of the size it
+              carried before to occupy the same measure. */}
           <h1
-            className="glitch text-6xl md:text-8xl font-black mb-6 tracking-tight"
-            data-text="CYBERCRAFT"
+            className="font-pixel text-[28px] md:text-[52px] leading-[1.3] mb-8"
             data-reveal="blur-in"
             data-delay="150"
           >
@@ -129,12 +131,15 @@ export function HeroSection() {
               data-reveal="fade-up"
               data-delay="500"
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[var(--secondary)]/20 flex items-center justify-center">
-                <Server className="w-6 h-6 md:w-7 md:h-7 text-[var(--secondary)]" />
+              {/* Was magenta. In this palette magenta carries status, so
+                  using it to decorate a neutral stat put a warning colour
+                  on a number that is not one. */}
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[var(--primary)]/15 flex items-center justify-center">
+                <Server className="w-6 h-6 md:w-7 md:h-7 text-[var(--primary)]" />
               </div>
               <div className="text-left">
                 {isLoading ? (
-                  <Loader2 className="w-6 h-6 text-[var(--secondary)] animate-spin" />
+                  <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
                 ) : isError ? (
                   <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">--</p>
                 ) : (

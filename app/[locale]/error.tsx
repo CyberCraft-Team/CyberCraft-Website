@@ -12,7 +12,7 @@ export default function GlobalError({
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg-dark)]">
             <div className="absolute inset-0">
-                <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--secondary)]/10 rounded-full blur-[150px]" />
+                <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/[0.06] rounded-full blur-[150px]" />
             </div>
 
             <div className="relative text-center max-w-md">

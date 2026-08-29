@@ -77,7 +77,7 @@ export default function NewsDetailPage() {
 
     return (
         <div className="min-h-screen">
-            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[#0f0f1a] -z-10" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[var(--surface-sunken)] -z-10" />
 
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* Back button */}

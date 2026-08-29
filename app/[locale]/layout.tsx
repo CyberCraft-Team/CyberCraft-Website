@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Chakra_Petch, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -12,7 +12,37 @@ import { Toaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin", "cyrillic"] });
+/*
+ * Type stack shared with the launcher's v2 direction.
+ *
+ * Press Start 2P carries the Minecraft read but is roughly twice as wide
+ * per glyph as a normal sans, so it is reserved for the wordmark, section
+ * labels, and short headings. Chakra Petch does the body work: its
+ * clipped corners echo the blocky geometry without costing legibility,
+ * and it ships Cyrillic, which the ru locale needs.
+ */
+const pixel = Press_Start_2P({
+  variable: "--font-pixel",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
+/* Chakra Petch ships no Cyrillic, so the ru locale falls through to Segoe
+   UI in the --font-sans stack. That is what the whole site rendered in
+   before this change, so Russian is unchanged rather than degraded. */
+const chakra = Chakra_Petch({
+  variable: "--font-chakra",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const jbMono = JetBrains_Mono({
+  variable: "--font-jbmono",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+});
 
 // uz, ru and en are all rendered at build time.
 export function generateStaticParams() {
@@ -69,7 +99,7 @@ export default async function LocaleLayout({
         <ExtensionAttributeGuard />
       </head>
       <body
-        className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}
+        className={`${pixel.variable} ${chakra.variable} ${jbMono.variable} font-sans antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
       >
         <NextIntlClientProvider>

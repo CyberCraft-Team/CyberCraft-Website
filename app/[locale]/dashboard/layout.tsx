@@ -100,7 +100,7 @@ function DashboardContent({
             <div>
               <span className="text-lg font-bold">
                 <span className="text-[var(--primary)]">CYBER</span>
-                <span className="text-[var(--secondary)]">CRAFT</span>
+                <span className="text-[var(--text-primary)]">CRAFT</span>
               </span>
               <p className="text-xs text-[var(--text-secondary)]">
                 Admin Panel

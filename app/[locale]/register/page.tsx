@@ -121,10 +121,10 @@ export default function RegisterPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[#0f0f1a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[var(--surface-sunken)]" />
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/10 rounded-full blur-[150px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-[var(--secondary)]/10 rounded-full blur-[150px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-[var(--primary)]/[0.06] rounded-full blur-[150px]" />
         </div>
 
         <div className="relative w-full max-w-md">
@@ -163,10 +163,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[#0f0f1a]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] to-[var(--surface-sunken)]" />
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[var(--primary)]/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-[var(--secondary)]/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-[var(--primary)]/[0.06] rounded-full blur-[150px]" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -178,7 +178,7 @@ export default function RegisterPage() {
               </div>
               <span className="text-2xl font-bold">
                 <span className="text-[var(--primary)] neon-cyan">CYBER</span>
-                <span className="text-[var(--secondary)]">CRAFT</span>
+                <span className="text-[var(--text-primary)]">CRAFT</span>
               </span>
             </Link>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mt-6">

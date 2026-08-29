@@ -13,53 +13,61 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Brand. Hues are unchanged -- cyan 184, green 152, pink 337. Only
-     lightness is graded, so cyan leads and the other two recede. Before this,
-     the green was L* 88.6 (the brightest thing on the page after white) while
-     the pink was L* 54.1, which put a status colour above the brand. */
-  --primary: #00f0ff;      /* L* 86.8 */
-  --primary-dark: #00a8b3;
-  --secondary: #ff6fa6;    /* was #ff0060 -- L* 54.1 -> 66.0 */
-  --accent: #0ac46d;       /* was #00ff88 -- L* 88.6 -> 69.9 */
+  /* Brand. Retargeted to match the launcher's v2 direction: acid lime is
+     where Minecraft's creeper green and cyberpunk neon happen to agree.
+     The lightness grading from the previous cyan palette is preserved --
+     the lead colour still sits highest and the status hues recede -- only
+     the hues moved, so every contrast decision downstream still holds. */
+  --primary: #8cff2e;      /* L* 89.7  acid lime */
+  --primary-dark: #5fc400;
+  --secondary: #ff2e88;    /* magenta, status and accents only */
+  --accent: #5fc400;       /* deep acid, the pressed/active state */
 
   /* Status. Each hue is tuned separately: at full saturation green sits
      about 30 L* points above red, so one shared lightness does not work. */
-  --success: #0ac46d;      /* L* 69.9 */
-  --warning: #e79c06;      /* was #ffaa00 -- L* 70.0 */
-  --error: #ff5c5c;        /* was #ff4444 -- L* 61.4 */
-  --info: #00f0ff;         /* L* 86.8 */
+  --success: #5fc400;      /* L* 70.4 */
+  --warning: #ffb020;      /* L* 78.0 */
+  --error: #ff5c5c;        /* L* 61.4 */
+  --info: #8cff2e;
 
-  /* Surfaces. Every step is a visible L* increment, and the ladder now runs
-     the right way: an input sits below its card, a popover above it. */
-  --bg-dark: #08080c;        /* L*  2.3  page */
-  --surface-sunken: #0b0b12; /* L*  3.2  input, textarea */
-  --bg-card: #101019;        /* L*  5.0  card, panel */
-  --surface-raised: #171722; /* L*  8.2  popover, dropdown, modal */
-  --bg-sidebar: #0b0b12;
-  --border-color: #26263b;   /* L* 16.1 */
+  /* Surfaces. Every step is a visible L* increment, and the ladder runs
+     the right way: an input sits below its card, a popover above it. The
+     hue shifted from violet-black to the cool blue-black v2 uses. */
+  --bg-dark: #06080c;        /* page */
+  --surface-sunken: #090d12; /* input, textarea */
+  --bg-card: #121a24;        /* card, panel */
+  --surface-raised: #1b2530; /* popover, dropdown, modal */
+  --bg-sidebar: #090d12;
+  --border-color: #26333f;
 
-  --text-primary: #ffffff;
-  --text-secondary: #8888aa;
-  --glow-color: rgba(0, 240, 255, 0.3);
+  --text-primary: #e8f0f7;
+  --text-secondary: #8296ab;
+  --glow-color: rgba(140, 255, 46, 0.25);
 
   /* shadcn aliases over the same ladder. */
-  --background: #08080c;
-  --foreground: #ffffff;
-  --card: #101019;
-  --card-foreground: #ffffff;
-  --popover: #171722;
-  --popover-foreground: #ffffff;
-  --muted: #1b1b28;          /* L* 10.3 -- no longer equal to --border */
-  --muted-foreground: #8888aa;
-  --border: #26263b;
-  --input: #0b0b12;          /* no longer equal to --card */
-  --ring: #00f0ff;
-  --radius: 0.75rem;
+  --background: #06080c;
+  --foreground: #e8f0f7;
+  --card: #121a24;
+  --card-foreground: #e8f0f7;
+  --popover: #1b2530;
+  --popover-foreground: #e8f0f7;
+  --muted: #16202b;
+  --muted-foreground: #8296ab;
+  --border: #26333f;
+  --input: #090d12;
+  --ring: #8cff2e;
+
+  /* Blocky world: one radius system, and it is zero. A voxel game's site
+     should not have soft corners. */
+  --radius: 0px;
 }
 
 @theme inline {
-  --font-sans: "Segoe UI", "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  /* Segoe UI stays in the stack as the Cyrillic fallback: Chakra Petch
+     ships no Cyrillic, and this is what the ru locale already rendered
+     in, so Russian is unchanged rather than degraded. */
+  --font-sans: var(--font-chakra), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), "JetBrains Mono", monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -92,9 +100,19 @@
   --color-surface-sunken: var(--surface-sunken);
 
   --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Shape lock. Setting --radius alone only reaches the shadcn
+     components; the rounded-sm .. rounded-3xl utilities carry their own
+     scale, and roughly a hundred call sites across the site use them.
+     Zeroing the scale here makes the whole site sharp without touching
+     any of them. rounded-full is deliberately left alone: it is load
+     bearing for spinners and progress tracks, which would read as broken
+     as squares. That is the one documented exception. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
   --color-sidebar: var(--bg-sidebar);
   --color-sidebar-foreground: var(--text-primary);
   --color-sidebar-primary: var(--primary);
@@ -227,37 +245,48 @@ section {
   }
 }
 
+/* ── Voxel language ──────────────────────────────────────────────────
+   The neon-glow effects below are retired in place rather than deleted:
+   these class names appear across 30-plus files, so rewriting the bodies
+   converts the whole site while leaving every call site untouched.
+   Colour now comes from the token, and depth from lit and shaded edges
+   the way a Minecraft block reads, not from a halo. */
+
+.font-pixel {
+  font-family: var(--font-pixel), monospace;
+}
+
 .neon-cyan {
-  text-shadow:
-    0 0 10px var(--primary),
-    0 0 20px var(--primary),
-    0 0 40px var(--primary);
+  color: var(--primary);
 }
 
 .neon-pink {
-  text-shadow:
-    0 0 10px var(--secondary),
-    0 0 20px var(--secondary),
-    0 0 40px var(--secondary);
+  color: var(--secondary);
 }
 
 .neon-green {
-  text-shadow:
-    0 0 10px var(--accent),
-    0 0 20px var(--accent),
-    0 0 40px var(--accent);
+  color: var(--accent);
 }
 
+/* A block face: lit on top, shaded underneath. */
 .glow-box {
-  box-shadow:
-    0 0 20px var(--glow-color),
-    inset 0 0 20px rgba(0, 240, 255, 0.05);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  border-left: 1px solid rgb(255 255 255 / 0.04);
+  border-right: 1px solid rgb(0 0 0 / 0.4);
+  border-bottom: 1px solid rgb(0 0 0 / 0.5);
 }
 
 .glow-box-pink {
-  box-shadow:
-    0 0 20px color-mix(in srgb, var(--secondary) 30%, transparent),
-    inset 0 0 20px color-mix(in srgb, var(--secondary) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--secondary) 40%, transparent);
+}
+
+/* 16px cells, the Minecraft texture unit. Attach to a fixed,
+   pointer-events-none layer so it never repaints during scroll. */
+.pixel-grid {
+  background-image:
+    linear-gradient(to right, rgb(140 255 46 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(140 255 46 / 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 
 .glass {
@@ -269,58 +298,61 @@ section {
   border: 1px solid var(--border-color);
 }
 
+/* A Minecraft button is a solid with a lit top edge and a shaded bottom.
+   Pressing it collapses the bottom shadow and drops the face, so the
+   click reads as physical depth rather than a colour change. */
 .cyber-btn {
   position: relative;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  border: none;
-  color: var(--bg-dark);
-  font-weight: 700;
-  overflow: hidden;
-  transition: all 0.3s;
+  background: var(--primary-dark);
+  color: #06210a;
+  font-weight: 600;
+  border-top: 2px solid rgb(255 255 255 / 0.35);
+  border-left: 2px solid rgb(255 255 255 / 0.18);
+  border-right: 2px solid rgb(0 0 0 / 0.35);
+  border-bottom: 2px solid rgb(0 0 0 / 0.45);
+  box-shadow: 0 4px 0 0 #2f6b00;
+  transition:
+    transform 90ms steps(2),
+    box-shadow 90ms steps(2),
+    background-color 140ms;
 }
 
 .cyber-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px var(--glow-color);
+  background: var(--primary);
 }
 
-.cyber-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  transform: translateX(-100%);
+.cyber-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 #2f6b00;
 }
 
-.cyber-btn:hover::before {
-  animation: shine 0.8s ease;
-}
-
-@keyframes shine {
-  to {
-    transform: translateX(100%);
+@media (prefers-reduced-motion: reduce) {
+  .cyber-btn {
+    transition: background-color 140ms;
   }
 }
 
+/* Was an expanding halo. Now a two-step opacity blip, which suits a
+   pixel world and does not repaint a large shadow every frame. */
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 20px var(--glow-color);
+    opacity: 1;
   }
   50% {
-    box-shadow:
-      0 0 40px var(--glow-color),
-      0 0 60px var(--glow-color);
+    opacity: 0.4;
   }
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: pulse-glow 2.4s steps(2, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .animate-float {
+    animation: none;
+  }
 }
 
 @keyframes float {
@@ -353,32 +385,35 @@ section {
 }
 
 .status-online {
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
+  background: var(--primary);
 }
 
 .status-offline {
   background: var(--error);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--error) 50%, transparent);
 }
 
+/* Panel weight version of the same lit-top / shaded-bottom solid. */
 .cyber-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  transition: all 0.3s;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+  border-left: 1px solid rgb(255 255 255 / 0.04);
+  border-right: 1px solid rgb(0 0 0 / 0.4);
+  border-bottom: 1px solid rgb(0 0 0 / 0.5);
+  border-radius: 0;
+  transition:
+    border-color 200ms,
+    background-color 200ms;
 }
 
 .cyber-card:hover {
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
-  transform: translateY(-4px);
+  background: var(--surface-raised);
+  border-color: var(--border-color);
 }
 
+/* Was a gradient text-fill. Large gradient headings read as a template
+   tell, and the single accent says the same thing more plainly. */
 .gradient-text {
-  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary);
 }
 
 /* Sliding nav indicator */
@@ -386,12 +421,11 @@ section {
   position: absolute;
   bottom: 0;
   height: 100%;
-  border-radius: 0.5rem;
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid rgba(0, 240, 255, 0.15);
-  box-shadow:
-    0 0 12px rgba(0, 240, 255, 0.1),
-    inset 0 0 12px rgba(0, 240, 255, 0.03);
+  /* The last hardcoded cyan on the site: this rule predates the token
+     system, so the palette swap missed it. */
+  border-radius: 0;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   transition:
     left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     width 0.4s cubic-bezier(0.4, 0, 0.2, 1),

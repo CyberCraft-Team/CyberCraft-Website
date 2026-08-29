@@ -31,7 +31,7 @@ export function ParticlesBackground() {
                     },
                 },
                 color: {
-                    value: ["#00f0ff", "#00ff88", "#ff0060", "#ffffff"],
+                    value: ["#8cff2e", "#5fc400", "#e8f0f7"],
                 },
                 shape: {
                     type: "circle",
@@ -55,7 +55,7 @@ export function ParticlesBackground() {
                 links: {
                     enable: true,
                     distance: 150,
-                    color: "#00f0ff",
+                    color: "#8cff2e",
                     opacity: 0.15,
                     width: 1,
                 },
@@ -85,7 +85,7 @@ export function ParticlesBackground() {
                         distance: 140,
                         links: {
                             opacity: 0.4,
-                            color: "#00f0ff",
+                            color: "#8cff2e",
                         },
                     },
                     push: {

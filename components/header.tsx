@@ -278,8 +278,8 @@ export function Header() {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center glow-box">
               <Gamepad2 className="w-6 h-6 text-[var(--bg-dark)]" />
             </div>
-            <span className="text-xl font-bold">
-              <span className="text-[var(--primary)] neon-cyan">CYBER</span>
+            <span className="font-pixel text-[13px] leading-none">
+              <span className="text-[var(--primary)]">CYBER</span>
               <span className="text-[var(--text-primary)]">CRAFT</span>
             </span>
           </Link>
