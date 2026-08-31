@@ -16,8 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminAuth } from "@/lib/api/hooks";
-import GoogleLoginButton from "@/components/auth/google-login-button";
-import TelegramLoginButton from "@/components/auth/telegram-login-button";
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
@@ -138,10 +136,15 @@ export default function AdminLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 flex flex-col gap-3">
-            <GoogleLoginButton />
-            <TelegramLoginButton />
-          </div>
+          {/*
+            No social login here. The backend only ever issues an
+            admin-scoped token from AdminLoginView (username + password);
+            Google and Telegram both mint a launcher-scoped token and set
+            the user cookie, which useAdminAuth does not read. Rendering
+            those buttons on this page offered a route that silently
+            signed you in as a regular user and left the dashboard
+            unreachable, with no error to explain why.
+          */}
 
           <p className="text-center text-[var(--text-secondary)] mt-6">
             <Link
