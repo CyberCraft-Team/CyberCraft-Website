@@ -484,6 +484,24 @@ section {
   will-change: auto;
 }
 
+/*
+ * Reduced motion: reveal instantly rather than travelling.
+ *
+ * The base state here is opacity 0, so simply disabling the transition
+ * would leave the content invisible until the observer fires. These rules
+ * put every reveal element in its final state up front, which also means
+ * the page still reads if the observer never runs at all.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
 /* Simple scroll-reveal class (used with useScrollReveal hook) */
 .scroll-reveal {
   opacity: 0;

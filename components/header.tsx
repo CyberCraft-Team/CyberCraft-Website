@@ -284,7 +284,7 @@ export function Header() {
             </span>
           </Link>
 
-          <nav ref={navRef} className="hidden lg:flex items-center gap-1 relative">
+          <nav ref={navRef} className="hidden xl:flex items-center gap-1 relative">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isHashLink = link.href.startsWith("/#");
@@ -317,7 +317,7 @@ export function Header() {
             />
           </nav>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             <Button
               variant="outline"
               className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--bg-dark)] bg-transparent transition-all duration-300"
@@ -331,7 +331,7 @@ export function Header() {
           </div>
 
           <button
-            className="lg:hidden text-[var(--text-primary)] p-2 hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+            className="xl:hidden text-[var(--text-primary)] p-2 hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -339,7 +339,7 @@ export function Header() {
         </div>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 lg:hidden py-4 px-4 border-b border-[var(--border-color)] glass animate-in slide-in-from-top-2">
+          <div className="absolute top-full left-0 right-0 xl:hidden py-4 px-4 border-b border-[var(--border-color)] glass animate-in slide-in-from-top-2">
             <nav className="flex flex-col gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
