@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiFetch } from "@/lib/api/fetcher";
 import { useAdminUsers } from "@/lib/api/hooks";
 import type { User } from "@/lib/api/types";
 
@@ -33,41 +34,37 @@ export default function UsersPage() {
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Through the proxy on this app's own origin, which attaches the admin
+  // token from the HttpOnly cookie. Calling the Django origin directly sent
+  // no credential at all, so every one of these buttons answered 401 -- and
+  // the old code never checked the response, so the failure was silent.
   const toggleWhitelist = async (userId: number, currentStatus: boolean) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-        }/admin/users/${userId}/whitelist/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ is_whitelisted: !currentStatus }),
-        }
-      );
+      await apiFetch(`admin/users/${userId}/whitelist/`, {
+        method: "POST",
+        json: { is_whitelisted: !currentStatus },
+      });
       mutate();
     } catch (error) {
-      console.error("Whitelist o'zgartirishda xato:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Whitelist o'zgartirishda xato",
+      );
     }
   };
 
   const toggleOperator = async (userId: number, currentStatus: boolean) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-        }/admin/users/${userId}/operator/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ is_operator: !currentStatus }),
-        }
-      );
+      await apiFetch(`admin/users/${userId}/operator/`, {
+        method: "POST",
+        json: { is_operator: !currentStatus },
+      });
       mutate();
     } catch (error) {
-      console.error("Operator o'zgartirishda xato:", error);
+      alert(
+        error instanceof Error ? error.message : "Operator o'zgartirishda xato",
+      );
     }
   };
 

@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiFetch } from "@/lib/api/fetcher";
 import { useAdminNews } from "@/lib/api/hooks";
 
 interface NewsCategory {
@@ -68,20 +69,18 @@ export default function NewsPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/categories/`,
-          {
-                      },
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
-          if (data.length > 0) {
-            setFormData((prev) => ({
-              ...prev,
-              category: data[0].id.toString(),
-            }));
-          }
+        // Through the proxy on this app's own origin, which attaches the
+        // admin token from the HttpOnly cookie. Straight to Django it was a
+        // credential-less cross-origin call, so it answered 401 and the
+        // category list stayed empty.
+        const data = await apiFetch<any>("admin/categories/");
+        const list = Array.isArray(data) ? data : data?.results || [];
+        setCategories(list);
+        if (list.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            category: list[0].id.toString(),
+          }));
         }
       } catch (error) {
         console.error("Kategoriyalarni yuklashda xato:", error);
@@ -129,40 +128,21 @@ export default function NewsPage() {
         category: categoryId,
       };
 
-      console.log("Sending request:", requestBody);
+      await apiFetch("admin/news/", { method: "POST", json: requestBody });
 
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-        }/admin/news/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        },
-      );
-
-      if (response.ok) {
-        setIsCreateOpen(false);
-        setFormData({
-          title: "",
-          excerpt: "",
-          content: "",
-          category: categories.length > 0 ? categories[0].id.toString() : "",
-          image_url: "",
-        });
-        mutate();
-      } else {
-        // Log the error response for debugging
-        const errorData = await response.json();
-        console.error("Server error:", errorData);
-        alert(`Xato: ${JSON.stringify(errorData)}`);
-      }
+      setIsCreateOpen(false);
+      setFormData({
+        title: "",
+        excerpt: "",
+        content: "",
+        category: categories.length > 0 ? categories[0].id.toString() : "",
+        image_url: "",
+      });
+      mutate();
     } catch (error) {
-      console.error("Yangilik yaratishda xato:", error);
-      alert(`Xato: ${error}`);
+      alert(
+        error instanceof Error ? error.message : "Yangilik yaratishda xato",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -172,17 +152,12 @@ export default function NewsPage() {
     if (!confirm("Yangilikni o'chirishni tasdiqlaysizmi?")) return;
 
     try {
-      await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-        }/admin/news/${newsId}/`,
-        {
-          method: "DELETE",
-                  },
-      );
+      await apiFetch(`admin/news/${newsId}/`, { method: "DELETE" });
       mutate();
     } catch (error) {
-      console.error("Yangilik o'chirishda xato:", error);
+      alert(
+        error instanceof Error ? error.message : "Yangilik o'chirishda xato",
+      );
     }
   };
 

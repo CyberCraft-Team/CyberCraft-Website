@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiFetch } from "@/lib/api/fetcher";
 import { useAdminPublicServers } from "@/lib/api/hooks";
 import type { Server as ServerType } from "@/lib/api/types";
 
@@ -164,21 +165,10 @@ export default function PublicServersPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        },
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || data.detail || "Server yaratishda xato");
-      }
+      // Through the proxy on this app's own origin, which attaches the admin
+      // token from the HttpOnly cookie. Going straight to the Django origin
+      // carried no credential, so this answered 401 every time.
+      await apiFetch("admin/servers/", { method: "POST", json: formData });
 
       mutate();
       setIsCreateOpen(false);
@@ -194,21 +184,10 @@ export default function PublicServersPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/${selectedServer.id}/`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        },
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || data.detail || "Server yangilashda xato");
-      }
+      await apiFetch(`admin/servers/${selectedServer.id}/`, {
+        method: "PATCH",
+        json: formData,
+      });
 
       mutate();
       setIsEditOpen(false);
@@ -223,16 +202,13 @@ export default function PublicServersPage() {
     if (!selectedServer) return;
     setIsSubmitting(true);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/admin/servers/${selectedServer.id}/`,
-        {
-          method: "DELETE",
-                  },
-      );
+      await apiFetch(`admin/servers/${selectedServer.id}/`, {
+        method: "DELETE",
+      });
       mutate();
       setIsDeleteOpen(false);
     } catch (err) {
-      console.error("Delete error:", err);
+      setError(err instanceof Error ? err.message : "Server o'chirishda xato");
     } finally {
       setIsSubmitting(false);
     }
@@ -674,7 +650,14 @@ export default function PublicServersPage() {
               Serverni o'chirish
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-3">
+            {/* The shared banner lives in renderForm, which this dialog does
+                not use, so a failed delete had nowhere to show itself. */}
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
             <p className="text-[var(--text-secondary)]">
               <span className="font-semibold text-[var(--text-primary)]">
                 {selectedServer?.name}

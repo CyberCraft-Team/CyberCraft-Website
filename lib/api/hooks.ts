@@ -32,17 +32,32 @@ import type {
 
 const noFocusRevalidate = { revalidateOnFocus: false } as const;
 
+/**
+ * A list endpoint answers in one of two shapes: a bare array from a plain
+ * APIView, or a paginated envelope from a ListAPIView, because the backend
+ * sets PageNumberPagination as its default. Callers only ever want the rows,
+ * and a page that calls .filter() straight on the envelope crashes, so every
+ * list hook is normalised through here.
+ */
+type ListResponse<T> = T[] | { results: T[] };
+
+function toList<T>(data: ListResponse<T> | undefined): T[] {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
 // ---------------------------------------------------------------------------
 // Public data
 // ---------------------------------------------------------------------------
 
 export function useServers() {
-  const { data, error, isLoading, mutate } = useSWR<Server[]>(
+  const { data, error, isLoading, mutate } = useSWR<ListResponse<Server>>(
     "public/servers/",
     swrFetcher,
     { refreshInterval: 30000, ...noFocusRevalidate },
   );
-  return { servers: data || [], isLoading, isError: error, mutate };
+  return { servers: toList<Server>(data), isLoading, isError: error, mutate };
 }
 
 export function useStats() {
@@ -54,38 +69,38 @@ export function useStats() {
 }
 
 export function useNews() {
-  const { data, error, isLoading } = useSWR<News[]>("public/news/", swrFetcher, {
+  const { data, error, isLoading } = useSWR<ListResponse<News>>("public/news/", swrFetcher, {
     refreshInterval: 60000,
     ...noFocusRevalidate,
   });
-  return { news: data || [], isLoading, isError: error };
+  return { news: toList<News>(data), isLoading, isError: error };
 }
 
 export function useVotingSites() {
-  const { data, error, isLoading } = useSWR<VotingSite[]>(
+  const { data, error, isLoading } = useSWR<ListResponse<VotingSite>>(
     "public/voting/sites/",
     swrFetcher,
     noFocusRevalidate,
   );
-  return { votingSites: data || [], isLoading, isError: error };
+  return { votingSites: toList<VotingSite>(data), isLoading, isError: error };
 }
 
 export function useSocialLinks() {
-  const { data, error, isLoading } = useSWR<SocialLink[]>(
+  const { data, error, isLoading } = useSWR<ListResponse<SocialLink>>(
     "public/social-links/",
     swrFetcher,
     noFocusRevalidate,
   );
-  return { socialLinks: data || [], isLoading, isError: error };
+  return { socialLinks: toList<SocialLink>(data), isLoading, isError: error };
 }
 
 export function useTopVoters() {
-  const { data, error, isLoading } = useSWR<TopVoter[]>(
+  const { data, error, isLoading } = useSWR<ListResponse<TopVoter>>(
     "public/voting/top/",
     swrFetcher,
     { refreshInterval: 60000, ...noFocusRevalidate },
   );
-  return { topVoters: data || [], isLoading, isError: error };
+  return { topVoters: toList<TopVoter>(data), isLoading, isError: error };
 }
 
 export function useLauncherDownloads() {
@@ -98,10 +113,10 @@ export function useLauncherDownloads() {
 }
 
 export function useRanks() {
-  const { data, error, isLoading } = useSWR<Rank[]>("rewards/ranks/", swrFetcher, {
+  const { data, error, isLoading } = useSWR<ListResponse<Rank>>("rewards/ranks/", swrFetcher, {
     ...noFocusRevalidate,
   });
-  return { ranks: data || [], isLoading, isError: error };
+  return { ranks: toList<Rank>(data), isLoading, isError: error };
 }
 
 // ---------------------------------------------------------------------------
@@ -272,12 +287,12 @@ export function useReferralInfo() {
 }
 
 export function useCCTransactions() {
-  const { data, error, isLoading, mutate } = useSWR<CCTransaction[]>(
+  const { data, error, isLoading, mutate } = useSWR<ListResponse<CCTransaction>>(
     "rewards/transactions/",
     swrFetcher,
     sessionOptions,
   );
-  return { transactions: data || [], isLoading, isError: error, mutate };
+  return { transactions: toList<CCTransaction>(data), isLoading, isError: error, mutate };
 }
 
 export function useAdminNews() {
@@ -286,7 +301,7 @@ export function useAdminNews() {
     swrFetcher,
     { refreshInterval: 30000, ...sessionOptions },
   );
-  return { news: data?.results || data || [], isLoading, isError: error, mutate };
+  return { news: toList<any>(data), isLoading, isError: error, mutate };
 }
 
 export function useAdminUsers() {
@@ -295,7 +310,7 @@ export function useAdminUsers() {
     swrFetcher,
     sessionOptions,
   );
-  return { users: data?.results || data || [], isLoading, isError: error, mutate };
+  return { users: toList<any>(data), isLoading, isError: error, mutate };
 }
 
 export function useAdminPublicServers() {
@@ -305,7 +320,7 @@ export function useAdminPublicServers() {
     sessionOptions,
   );
   return {
-    servers: data?.results || data || [],
+    servers: toList<any>(data),
     isLoading,
     isError: error,
     mutate,

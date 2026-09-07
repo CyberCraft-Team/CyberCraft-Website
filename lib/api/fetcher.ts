@@ -57,6 +57,12 @@ export async function apiFetch<T = unknown>(
   if (json !== undefined) {
     finalHeaders.set("Content-Type", "application/json");
     body = JSON.stringify(json);
+  } else if (typeof body === "string" && !finalHeaders.has("Content-Type")) {
+    // fetch() labels a string body "text/plain", which DRF has no parser
+    // for -- every caller that pre-stringified its payload instead of using
+    // `json` got a 415 back, the console command among them. A string body
+    // here is always JSON.
+    finalHeaders.set("Content-Type", "application/json");
   }
 
   // Next redirects a trailing slash away with a 308, so paths are sent

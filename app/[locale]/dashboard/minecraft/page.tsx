@@ -46,6 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 
 import useSWR from "swr";
+import { apiFetch } from "@/lib/api/fetcher";
 import { minecraftAPI } from "@/lib/api/minecraft";
 
 interface MinecraftServer {
@@ -63,19 +64,6 @@ interface MinecraftServer {
   uptime?: number;
   created_at: string;
 }
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-const fetcher = async (url: string) => {
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!response.ok) throw new Error("Failed to fetch");
-  return response.json();
-};
 
 export default function MinecraftServersPage() {
   const router = useRouter();
@@ -110,11 +98,18 @@ export default function MinecraftServersPage() {
     white_list: false,
   });
 
+  // Through the proxy on this app's own origin, which attaches the admin
+  // token from the HttpOnly cookie. Fetching the Django origin directly
+  // carries no credential at all, so the endpoint answered 401 and the page
+  // rendered its "no servers yet" state as though the database were empty.
   const {
     data: servers = [],
     isLoading,
+    error,
     mutate,
-  } = useSWR<MinecraftServer[]>(`${API_BASE_URL}/minecraft/servers/`, fetcher);
+  } = useSWR<MinecraftServer[]>("minecraft/servers/", (path: string) =>
+    apiFetch<MinecraftServer[]>(path),
+  );
 
   const requiresLoaderVersion = ["forge", "fabric", "neoforge"].includes(
     formData.server_type,
@@ -258,20 +253,9 @@ export default function MinecraftServersPage() {
   ) => {
     setActionLoading(serverId);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/minecraft/servers/${serverId}/${action}/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Xato yuz berdi");
-      }
+      if (action === "start") await minecraftAPI.startServer(serverId);
+      else if (action === "stop") await minecraftAPI.stopServer(serverId);
+      else await minecraftAPI.restartServer(serverId);
 
       setTimeout(() => mutate(), 1000);
     } catch (err: any) {
@@ -290,21 +274,7 @@ export default function MinecraftServersPage() {
       return;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/minecraft/servers/${serverId}/`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Server o'chirishda xato");
-      }
-
+      await minecraftAPI.deleteServer(serverId);
       mutate();
     } catch (err: any) {
       alert(err.message || "Server o'chirishda xato");
@@ -880,6 +850,21 @@ export default function MinecraftServersPage() {
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
         </div>
+      ) : error ? (
+        <Card className="cyber-card">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Server className="w-16 h-16 text-red-500 mb-4" />
+            <h3 className="text-xl font-medium text-[var(--text-primary)] mb-2">
+              Serverlar ro'yxatini yuklab bo'lmadi
+            </h3>
+            <p className="text-[var(--text-secondary)] mb-4">
+              {(error as Error)?.message || "Noma'lum xato"}
+            </p>
+            <Button className="cyber-btn" onClick={() => mutate()}>
+              Qayta urinish
+            </Button>
+          </CardContent>
+        </Card>
       ) : filteredServers.length === 0 ? (
         <Card className="cyber-card">
           <CardContent className="flex flex-col items-center justify-center py-16">

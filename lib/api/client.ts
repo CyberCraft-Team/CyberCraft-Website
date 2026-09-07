@@ -12,6 +12,18 @@ import { apiFetch } from "./fetcher";
  * the two places where the cookie is written.
  */
 
+/**
+ * A list endpoint answers either with a bare array (plain APIView) or with a
+ * paginated envelope (ListAPIView + the backend's default
+ * PageNumberPagination). Callers want the rows either way.
+ */
+async function list<T = any>(path: string): Promise<T[]> {
+  const data = await apiFetch<any>(path);
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
 class ApiClient {
   // -- public ---------------------------------------------------------------
 
@@ -48,7 +60,7 @@ class ApiClient {
   }
 
   getRanks() {
-    return apiFetch<any>("rewards/ranks/");
+    return list("rewards/ranks/");
   }
 
   // -- registration and account recovery ------------------------------------
@@ -148,13 +160,13 @@ class ApiClient {
   }
 
   getCCTransactions() {
-    return apiFetch<any>("rewards/transactions/");
+    return list("rewards/transactions/");
   }
 
   // -- notifications --------------------------------------------------------
 
   getNotifications() {
-    return apiFetch<any>("notifications/");
+    return list("notifications/");
   }
 
   getNotificationUnreadCount() {

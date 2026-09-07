@@ -60,6 +60,17 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
 
   const hasBody = !["GET", "HEAD"].includes(request.method);
 
+  // Django's MultiPartParser takes the body length from CONTENT_LENGTH. On a
+  // chunked request there is none, so it reads nothing and returns an empty
+  // POST/FILES *without raising* -- a file upload then reached the serializer
+  // as "this field is required" for every form field, the file included.
+  // undici chunks any stream body unless it is given an explicit length, so
+  // the browser's own content-length is forwarded here. Streaming is
+  // preserved: buffering a multi-gigabyte server archive would exhaust the
+  // Node heap.
+  const contentLength = request.headers.get("content-length");
+  if (hasBody && contentLength) headers.set("content-length", contentLength);
+
   const response = await fetch(target, {
     method: request.method,
     headers,
