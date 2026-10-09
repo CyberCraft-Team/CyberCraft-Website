@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   // and a server-archive upload sent its whole body twice before the proxy
   // ever saw it. Let the route handler serve the slashed path directly.
   skipTrailingSlashRedirect: true,
+  // Preserve next-intl internal locale rewrites instead of redirecting
+  // default-locale pages back to the same public URL.
+  skipMiddlewareUrlNormalize: true,
   allowedDevOrigins: [
     "localhost:3000",
     "*.loca.lt",
