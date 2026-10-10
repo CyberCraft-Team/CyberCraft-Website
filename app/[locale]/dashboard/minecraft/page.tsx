@@ -1,9 +1,15 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import {
+  ManagementToolbar,
+  ManagementError,
+  ManagementEmpty,
+} from "@/components/dashboard/management";
+
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
 import {
   Server,
   Plus,
@@ -66,6 +72,9 @@ interface MinecraftServer {
 }
 
 export default function MinecraftServersPage() {
+  const t = useTranslations("dashboard.copy");
+  const m = useTranslations("dashboard.management");
+  const locale = useLocale();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -125,22 +134,22 @@ export default function MinecraftServersPage() {
     setErrorMessage(null);
 
     if (archiveType === "jar" && !jarFile) {
-      setErrorMessage("Iltimos, server JAR faylini yuklang");
+      setErrorMessage(t("please_upload_a_server_jar_file"));
       return;
     }
 
     if (archiveType === "zip" && !zipFile) {
-      setErrorMessage("Iltimos, server ZIP faylini yuklang");
+      setErrorMessage(t("please_upload_a_server_zip_file"));
       return;
     }
 
     if (!formData.name.trim()) {
-      setErrorMessage("Server nomini kiriting");
+      setErrorMessage(t("enter_a_server_name"));
       return;
     }
 
     if (!formData.slug.trim()) {
-      setErrorMessage("Slug kiriting");
+      setErrorMessage(t("enter_a_slug"));
       return;
     }
 
@@ -158,7 +167,6 @@ export default function MinecraftServersPage() {
     setUploadProgress(0);
 
     try {
-
       let newServer: { id: string };
       if (archiveType === "zip" && zipFile) {
         newServer = await minecraftAPI.createServerWithArchive(
@@ -215,7 +223,7 @@ export default function MinecraftServersPage() {
           white_list: formData.white_list,
         });
       } else {
-        throw new Error("Arxiv fayl topilmadi");
+        throw new Error(t("archive_file_not_found"));
       }
 
       setIsCreateOpen(false);
@@ -246,7 +254,7 @@ export default function MinecraftServersPage() {
       router.push(`/dashboard/minecraft/${newServer.id}`);
     } catch (err: any) {
       console.error("[v0] Error creating server:", err);
-      setErrorMessage(err.message || "Server yaratishda xato");
+      setErrorMessage(err.message || t("could_not_create_the_server"));
     } finally {
       setIsSubmitting(false);
     }
@@ -264,25 +272,21 @@ export default function MinecraftServersPage() {
 
       setTimeout(() => mutate(), 1000);
     } catch (err: any) {
-      alert(err.message || "Xato yuz berdi");
+      alert(err.message || t("something_went_wrong"));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    if (
-      !confirm(
-        "Serverni o'chirishni tasdiqlaysizmi? Barcha fayllar o'chiriladi!",
-      )
-    )
+    if (!confirm(t("delete_this_server_all_server_files_will_be_removed")))
       return;
 
     try {
       await minecraftAPI.deleteServer(serverId);
       mutate();
     } catch (err: any) {
-      alert(err.message || "Server o'chirishda xato");
+      alert(err.message || t("could_not_delete_the_server"));
     }
   };
 
@@ -295,29 +299,29 @@ export default function MinecraftServersPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "running":
-        return "bg-green-500";
+        return "bg-primary";
       case "starting":
       case "stopping":
-        return "bg-yellow-500";
+        return "bg-warning";
       case "error":
-        return "bg-red-500";
+        return "bg-destructive";
       default:
-        return "bg-gray-500";
+        return "bg-muted-foreground";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "running":
-        return "Ishlayapti";
+        return t("running");
       case "starting":
-        return "Ishga tushmoqda";
+        return t("starting");
       case "stopping":
-        return "To'xtamoqda";
+        return t("stopping");
       case "error":
-        return "Xato";
+        return t("error");
       default:
-        return "To'xtatilgan";
+        return t("stopped");
     }
   };
 
@@ -328,14 +332,14 @@ export default function MinecraftServersPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="management-page">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-            Minecraft Serverlar
+            {t("minecraft_servers")}
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">
-            Serverlarni yaratish, boshqarish va monitoring qilish
+            {t("create_manage_and_monitor_your_minecraft_servers")}
           </p>
         </div>
 
@@ -349,31 +353,35 @@ export default function MinecraftServersPage() {
           <DialogTrigger asChild>
             <Button className="cyber-btn">
               <Plus className="w-4 h-4 mr-2" />
-              Yangi server
+              {t("add_server")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="cyber-card border-[var(--border-color)] max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="management-dialog cyber-card border-[var(--border-color)] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-[var(--text-primary)]">
-                Yangi Minecraft server yaratish
+                {t("create_a_minecraft_server")}
               </DialogTitle>
               <DialogDescription className="text-[var(--text-secondary)]">
-                Server JAR faylini yuklang va sozlamalarni kiriting
+                {t(
+                  "upload_a_server_jar_or_zip_archive_and_configure_your_server",
+                )}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateServer} className="space-y-6 mt-4">
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm">
+                <div className="p-3 rounded-lg bg-destructive/20 border border-destructive/50 text-destructive text-sm">
                   {errorMessage}
                 </div>
               )}
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-                  Server JAR fayli
+                  {t("server_jar_file")}
                 </h3>
                 <div className="space-y-2">
-                  <Label className="text-[var(--text-secondary)]">Fayl turi</Label>
+                  <Label className="text-[var(--text-secondary)]">
+                    {t("file_type")}
+                  </Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -410,8 +418,8 @@ export default function MinecraftServersPage() {
                 <div className="space-y-2">
                   <Label className="text-[var(--text-secondary)]">
                     {archiveType === "jar"
-                      ? "JAR fayl yuklash *"
-                      : "ZIP fayl yuklash *"}
+                      ? t("upload_jar_file")
+                      : t("upload_zip_file")}
                   </Label>
                   <input
                     ref={jarFileInputRef}
@@ -448,16 +456,18 @@ export default function MinecraftServersPage() {
                     className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                       (archiveType === "jar" && jarFile) ||
                       (archiveType === "zip" && zipFile)
-                        ? "border-green-500/50 bg-green-500/5"
+                        ? "border-green-500/50 bg-primary/5"
                         : "border-[var(--border-color)] hover:border-[var(--primary)]"
                     }`}
                   >
                     {(archiveType === "jar" && jarFile) ||
                     (archiveType === "zip" && zipFile) ? (
                       <div className="flex items-center justify-center gap-2">
-                        <FileBox className="w-5 h-5 text-green-400" />
+                        <FileBox className="w-5 h-5 text-primary" />
                         <span className="text-[var(--text-primary)]">
-                          {archiveType === "jar" ? jarFile?.name : zipFile?.name}
+                          {archiveType === "jar"
+                            ? jarFile?.name
+                            : zipFile?.name}
                         </span>
                         <span className="text-[var(--text-secondary)] text-sm">
                           (
@@ -474,13 +484,15 @@ export default function MinecraftServersPage() {
                         <Upload className="w-8 h-8 text-[var(--text-secondary)] mx-auto mb-2" />
                         <p className="text-[var(--text-primary)]">
                           {archiveType === "jar"
-                            ? "JAR faylni tanlash uchun bosing"
-                            : "ZIP faylni tanlash uchun bosing"}
+                            ? t("click_to_select_a_jar_file")
+                            : t("click_to_select_a_zip_file")}
                         </p>
                         <p className="text-[var(--text-secondary)] text-sm mt-1">
                           {archiveType === "jar"
-                            ? "Paper, Spigot, Vanilla va boshqalar"
-                            : "Oldindan tayyor server papkasini ZIP qilib yuklang"}
+                            ? t("paper_spigot_vanilla_and_other_server_types")
+                            : t(
+                                "upload_a_zip_archive_of_a_prepared_server_directory",
+                              )}
                         </p>
                       </div>
                     )}
@@ -489,7 +501,8 @@ export default function MinecraftServersPage() {
                     <div className="space-y-2">
                       <Progress value={uploadProgress} className="h-2" />
                       <p className="text-xs text-[var(--text-secondary)]">
-                        Yuklanmoqda: {uploadProgress}%
+                        {t("uploading")}
+                        {uploadProgress}%
                       </p>
                     </div>
                   )}
@@ -498,14 +511,18 @@ export default function MinecraftServersPage() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-                  Asosiy ma'lumotlar
+                  {t("basic_information")}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Server nomi *
+                    <Label
+                      htmlFor="minecraft-field-1"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("server_name")}
                     </Label>
                     <Input
+                      id="minecraft-field-1"
                       value={formData.name}
                       onChange={(e) => {
                         setFormData({ ...formData, name: e.target.value });
@@ -526,15 +543,20 @@ export default function MinecraftServersPage() {
                         }
                       }}
                       placeholder="My Server"
+                      aria-label="My Server"
                       className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Slug *
+                    <Label
+                      htmlFor="minecraft-field-2"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("slug")}
                     </Label>
                     <Input
+                      id="minecraft-field-2"
                       value={formData.slug}
                       onChange={(e) =>
                         setFormData({
@@ -546,6 +568,7 @@ export default function MinecraftServersPage() {
                         })
                       }
                       placeholder="my-server"
+                      aria-label="my-server"
                       className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                       required
                     />
@@ -554,8 +577,11 @@ export default function MinecraftServersPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Server turi
+                    <Label
+                      htmlFor="minecraft-field-3"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("server_type")}
                     </Label>
                     <Select
                       value={formData.server_type}
@@ -567,7 +593,10 @@ export default function MinecraftServersPage() {
                         })
                       }
                     >
-                      <SelectTrigger className="bg-[var(--bg-dark)] border-[var(--border-color)]">
+                      <SelectTrigger
+                        id="minecraft-field-3"
+                        className="bg-[var(--bg-dark)] border-[var(--border-color)]"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -578,15 +607,21 @@ export default function MinecraftServersPage() {
                         <SelectItem value="fabric">Fabric</SelectItem>
                         <SelectItem value="forge">Forge</SelectItem>
                         <SelectItem value="neoforge">NeoForge</SelectItem>
-                        <SelectItem value="custom">Custom (ZIP / tayyor papka)</SelectItem>
+                        <SelectItem value="custom">
+                          {t("custom_zip_prepared_directory")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Minecraft versiya
+                    <Label
+                      htmlFor="minecraft-field-4"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("minecraft_version")}
                     </Label>
                     <Input
+                      id="minecraft-field-4"
                       value={formData.minecraft_version}
                       onChange={(e) =>
                         setFormData({
@@ -595,6 +630,7 @@ export default function MinecraftServersPage() {
                         })
                       }
                       placeholder="1.20.4"
+                      aria-label="1.20.4"
                       className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                       required
                     />
@@ -603,12 +639,16 @@ export default function MinecraftServersPage() {
 
                 {requiresLoaderVersion && (
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
+                    <Label
+                      htmlFor="minecraft-field-5"
+                      className="text-[var(--text-secondary)]"
+                    >
                       {formData.server_type.charAt(0).toUpperCase() +
                         formData.server_type.slice(1)}{" "}
-                      versiyasi *
+                      {t("version")}
                     </Label>
                     <Input
+                      id="minecraft-field-5"
                       value={formData.loader_version}
                       onChange={(e) =>
                         setFormData({
@@ -625,24 +665,39 @@ export default function MinecraftServersPage() {
                               ? "20.4.80"
                               : ""
                       }
+                      aria-label={
+                        formData.server_type === "forge"
+                          ? "47.2.0"
+                          : formData.server_type === "fabric"
+                            ? "0.15.6"
+                            : formData.server_type === "neoforge"
+                              ? "20.4.80"
+                              : ""
+                      }
                       className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                       required
                     />
                     <p className="text-xs text-[var(--text-secondary)]">
                       {formData.server_type === "forge" &&
-                        "Masalan: 47.2.0 (Forge versiyasi)"}
+                        t("example_47_2_0_forge_version")}
                       {formData.server_type === "fabric" &&
-                        "Masalan: 0.15.6 (Fabric Loader versiyasi)"}
+                        t("example_0_15_6_fabric_loader_version")}
                       {formData.server_type === "neoforge" &&
-                        "Masalan: 20.4.80 (NeoForge versiyasi)"}
+                        t("example_20_4_80_neoforge_version")}
                     </p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">Port</Label>
+                    <Label
+                      htmlFor="minecraft-field-6"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      Port
+                    </Label>
                     <Input
+                      id="minecraft-field-6"
                       type="number"
                       value={formData.port}
                       onChange={(e) =>
@@ -656,10 +711,14 @@ export default function MinecraftServersPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Max o'yinchilar
+                    <Label
+                      htmlFor="minecraft-field-7"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("player_limit")}
                     </Label>
                     <Input
+                      id="minecraft-field-7"
                       type="number"
                       value={formData.max_players}
                       onChange={(e) =>
@@ -677,13 +736,13 @@ export default function MinecraftServersPage() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-                  RAM sozlamalari
+                  {t("memory_settings")}
                 </h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <Label className="text-[var(--text-secondary)]">
-                        Minimum RAM
+                        {t("minimum_ram")}
                       </Label>
                       <span className="text-sm text-[var(--primary)]">
                         {formData.min_ram} MB
@@ -703,7 +762,7 @@ export default function MinecraftServersPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <Label className="text-[var(--text-secondary)]">
-                        Maximum RAM
+                        {t("maximum_ram")}
                       </Label>
                       <span className="text-sm text-[var(--primary)]">
                         {formData.max_ram} MB
@@ -725,12 +784,15 @@ export default function MinecraftServersPage() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-                  O'yin sozlamalari
+                  {t("game_settings")}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Gamemode
+                    <Label
+                      htmlFor="minecraft-field-8"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("game_mode")}
                     </Label>
                     <Select
                       value={formData.gamemode}
@@ -738,20 +800,34 @@ export default function MinecraftServersPage() {
                         setFormData({ ...formData, gamemode: v })
                       }
                     >
-                      <SelectTrigger className="bg-[var(--bg-dark)] border-[var(--border-color)]">
+                      <SelectTrigger
+                        id="minecraft-field-8"
+                        className="bg-[var(--bg-dark)] border-[var(--border-color)]"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="survival">Survival</SelectItem>
-                        <SelectItem value="creative">Creative</SelectItem>
-                        <SelectItem value="adventure">Adventure</SelectItem>
-                        <SelectItem value="spectator">Spectator</SelectItem>
+                        <SelectItem value="survival">
+                          {t("survival")}
+                        </SelectItem>
+                        <SelectItem value="creative">
+                          {t("creative")}
+                        </SelectItem>
+                        <SelectItem value="adventure">
+                          {t("adventure")}
+                        </SelectItem>
+                        <SelectItem value="spectator">
+                          {t("spectator")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[var(--text-secondary)]">
-                      Difficulty
+                    <Label
+                      htmlFor="minecraft-field-9"
+                      className="text-[var(--text-secondary)]"
+                    >
+                      {t("difficulty")}
                     </Label>
                     <Select
                       value={formData.difficulty}
@@ -759,14 +835,19 @@ export default function MinecraftServersPage() {
                         setFormData({ ...formData, difficulty: v })
                       }
                     >
-                      <SelectTrigger className="bg-[var(--bg-dark)] border-[var(--border-color)]">
+                      <SelectTrigger
+                        id="minecraft-field-9"
+                        className="bg-[var(--bg-dark)] border-[var(--border-color)]"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="peaceful">Peaceful</SelectItem>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
+                        <SelectItem value="peaceful">
+                          {t("peaceful")}
+                        </SelectItem>
+                        <SelectItem value="easy">{t("easy")}</SelectItem>
+                        <SelectItem value="normal">{t("normal")}</SelectItem>
+                        <SelectItem value="hard">{t("hard")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -784,7 +865,7 @@ export default function MinecraftServersPage() {
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-dark)]">
                     <Label className="text-[var(--text-secondary)]">
-                      Online Mode
+                      {t("online_mode")}
                     </Label>
                     <Switch
                       checked={formData.online_mode}
@@ -814,7 +895,7 @@ export default function MinecraftServersPage() {
                   onClick={() => setIsCreateOpen(false)}
                   className="border-[var(--border-color)]"
                 >
-                  Bekor qilish
+                  {t("cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -827,10 +908,10 @@ export default function MinecraftServersPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Yaratilmoqda...
+                      {t("creating")}
                     </>
                   ) : (
-                    "Yaratish"
+                    t("create")
                   )}
                 </Button>
               </div>
@@ -845,42 +926,43 @@ export default function MinecraftServersPage() {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Serverlarni qidirish..."
+            placeholder={t("search_servers")}
+            aria-label={t("search_servers")}
             className="pl-10 bg-[var(--bg-dark)] border-[var(--border-color)]"
           />
         </div>
       </div>
+
+      <ManagementToolbar
+        count={servers.length}
+        shown={filteredServers.length}
+        loading={isLoading || Boolean(error)}
+        onRefresh={async () => {
+          await mutate();
+        }}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
         </div>
       ) : error ? (
-        <Card className="cyber-card">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Server className="w-16 h-16 text-red-500 mb-4" />
-            <h3 className="text-xl font-medium text-[var(--text-primary)] mb-2">
-              Serverlar ro'yxatini yuklab bo'lmadi
-            </h3>
-            <p className="text-[var(--text-secondary)] mb-4">
-              {(error as Error)?.message || "Noma'lum xato"}
-            </p>
-            <Button className="cyber-btn" onClick={() => mutate()}>
-              Qayta urinish
-            </Button>
-          </CardContent>
-        </Card>
+        <ManagementError
+          onRetry={async () => {
+            await mutate();
+          }}
+        />
       ) : filteredServers.length === 0 ? (
         <Card className="cyber-card">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Server className="w-16 h-16 text-[var(--text-secondary)] mb-4" />
             <h3 className="text-xl font-medium text-[var(--text-primary)] mb-2">
-              Hozircha serverlar yo'q
+              {t("no_servers_yet")}
             </h3>
             <p className="text-[var(--text-secondary)] mb-4">
               {searchQuery
-                ? "Qidiruv bo'yicha natija topilmadi"
-                : "Hozircha hech qanday server yaratilmagan"}
+                ? t("no_results_match_your_search")
+                : t("add_your_first_server_to_start_managing_minecraft")}
             </p>
             {!searchQuery && (
               <Button
@@ -888,13 +970,13 @@ export default function MinecraftServersPage() {
                 onClick={() => setIsCreateOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Yangi server yaratish
+                {t("create_server")}
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
           {filteredServers.map((server) => (
             <Card
               key={server.id}
@@ -923,7 +1005,7 @@ export default function MinecraftServersPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[var(--text-secondary)] flex items-center gap-1">
                       <HardDrive className="w-4 h-4" />
-                      Versiya
+                      {t("version_79")}
                     </span>
                     <span className="text-[var(--text-primary)]">
                       {server.server_type} {server.minecraft_version}
@@ -933,7 +1015,7 @@ export default function MinecraftServersPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[var(--text-secondary)] flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      O'yinchilar
+                      {t("players")}
                     </span>
                     <span className="text-[var(--text-primary)]">
                       {server.current_players}/{server.max_players}
@@ -965,7 +1047,7 @@ export default function MinecraftServersPage() {
                     server.status === "error" ? (
                       <Button
                         size="sm"
-                        className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                        className="flex-1 bg-primary/20 text-primary hover:bg-primary/30"
                         onClick={() => handleServerAction(server.id, "start")}
                         disabled={actionLoading === server.id}
                       >
@@ -974,7 +1056,7 @@ export default function MinecraftServersPage() {
                         ) : (
                           <>
                             <Play className="w-4 h-4 mr-1" />
-                            Ishga tushirish
+                            {t("start")}
                           </>
                         )}
                       </Button>
@@ -982,7 +1064,7 @@ export default function MinecraftServersPage() {
                       <>
                         <Button
                           size="sm"
-                          className="flex-1 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          className="flex-1 bg-destructive/20 text-destructive hover:bg-destructive/30"
                           onClick={() => handleServerAction(server.id, "stop")}
                           disabled={actionLoading === server.id}
                         >
@@ -991,11 +1073,12 @@ export default function MinecraftServersPage() {
                           ) : (
                             <>
                               <Square className="w-4 h-4 mr-1" />
-                              To'xtatish
+                              {t("stop")}
                             </>
                           )}
                         </Button>
                         <Button
+                          aria-label={t("restart")}
                           size="sm"
                           variant="outline"
                           className="border-[var(--border-color)] bg-transparent"
@@ -1016,6 +1099,7 @@ export default function MinecraftServersPage() {
 
                     <Link href={`/dashboard/minecraft/${server.id}`}>
                       <Button
+                        aria-label={t("console")}
                         size="sm"
                         variant="outline"
                         className="border-[var(--border-color)] bg-transparent"
@@ -1026,6 +1110,7 @@ export default function MinecraftServersPage() {
 
                     <Link href={`/dashboard/minecraft/${server.id}/settings`}>
                       <Button
+                        aria-label={t("settings")}
                         size="sm"
                         variant="outline"
                         className="border-[var(--border-color)] bg-transparent"
@@ -1035,9 +1120,10 @@ export default function MinecraftServersPage() {
                     </Link>
 
                     <Button
+                      aria-label={t("delete")}
                       size="sm"
                       variant="outline"
-                      className="border-red-500/30 text-red-400 hover:bg-red-500/20 bg-transparent"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/20 bg-transparent"
                       onClick={() => handleDeleteServer(server.id)}
                     >
                       <Trash2 className="w-4 h-4" />

@@ -3,7 +3,17 @@
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { Youtube, Send, MessageCircle, Gamepad2, ExternalLink, Globe, Music, Instagram, Twitter } from "lucide-react";
+import {
+  Youtube,
+  Send,
+  MessageCircle,
+  Gamepad2,
+  ExternalLink,
+  Globe,
+  Music,
+  Instagram,
+  Twitter,
+} from "lucide-react";
 import { useSocialLinks } from "@/lib/api/hooks";
 import type { SocialLink } from "@/lib/api/types";
 import type { LucideIcon } from "lucide-react";
@@ -42,11 +52,14 @@ const platformIcons: Record<string, LucideIcon> = {
 const platformColors: Record<string, string> = {
   youtube: "hover:bg-red-500/20 hover:text-red-500 hover:border-red-500/50",
   telegram: "hover:bg-blue-500/20 hover:text-blue-500 hover:border-blue-500/50",
-  discord: "hover:bg-indigo-500/20 hover:text-indigo-500 hover:border-indigo-500/50",
-  instagram: "hover:bg-pink-500/20 hover:text-pink-500 hover:border-pink-500/50",
+  discord:
+    "hover:bg-indigo-500/20 hover:text-indigo-500 hover:border-indigo-500/50",
+  instagram:
+    "hover:bg-pink-500/20 hover:text-pink-500 hover:border-pink-500/50",
   tiktok: "hover:bg-cyan-500/20 hover:text-cyan-500 hover:border-cyan-500/50",
   twitter: "hover:bg-sky-500/20 hover:text-sky-500 hover:border-sky-500/50",
-  other: "hover:bg-[var(--primary)]/20 hover:text-[var(--primary)] hover:border-[var(--primary)]/50",
+  other:
+    "hover:bg-[var(--primary)]/20 hover:text-[var(--primary)] hover:border-[var(--primary)]/50",
 };
 
 function getSocialIcon(link: SocialLink): LucideIcon {
@@ -66,12 +79,16 @@ export function Footer() {
   return (
     <footer className="bg-[var(--bg-dark)] border-t border-[var(--border-color)]">
       <div
-        className="container mx-auto px-4 py-16"
+        className="container mx-auto px-4 py-10 sm:py-16"
         ref={revealRef as React.RefObject<HTMLDivElement>}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-8 sm:gap-10">
           {/* Brand */}
-          <div className="lg:col-span-2" data-reveal="fade-up" data-delay="0">
+          <div
+            className="col-span-2 min-w-0"
+            data-reveal="fade-up"
+            data-delay="0"
+          >
             <Link href="/" className="flex items-center gap-3 mb-5 group">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center glow-box">
                 <Gamepad2 className="w-6 h-6 text-[var(--bg-dark)]" />
@@ -82,9 +99,10 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-[var(--text-secondary)] mb-6 max-w-sm leading-relaxed">
-              {t("tagline")}</p>
+              {t("tagline")}
+            </p>
             {socialLinks.length > 0 && (
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {socialLinks.map((social) => {
                   const Icon = getSocialIcon(social);
                   return (
@@ -93,8 +111,9 @@ export function Footer() {
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`w-11 h-11 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] transition-all ${getSocialColor(social)}`}
+                      className={`w-11 h-11 shrink-0 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] transition-all ${getSocialColor(social)}`}
                       title={social.name}
+                      aria-label={social.name}
                     >
                       <Icon className="w-5 h-5" />
                     </a>
@@ -114,7 +133,7 @@ export function Footer() {
                 <li key={link.key}>
                   <Link
                     href={link.href}
-                    className="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors flex items-center gap-1 group"
+                    className="text-[var(--text-secondary)] hover:text-[var(--primary)] min-h-11 transition-colors flex items-center gap-1 group"
                   >
                     {t(link.key)}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -134,7 +153,7 @@ export function Footer() {
                 <li key={link.key}>
                   <Link
                     href={link.href}
-                    className="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors flex items-center gap-1 group"
+                    className="text-[var(--text-secondary)] hover:text-[var(--primary)] min-h-11 transition-colors flex items-center gap-1 group"
                   >
                     {t(link.key)}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -145,15 +164,24 @@ export function Footer() {
           </div>
 
           {/* Contact — dynamic from social links */}
-          <div data-reveal="fade-up" data-delay="450">
+          <div
+            className="col-span-2 min-w-0 lg:col-span-1"
+            data-reveal="fade-up"
+            data-delay="450"
+          >
             <h4 className="font-bold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-wider">
               {t("sectionContact")}
             </h4>
             <ul className="space-y-3 text-[var(--text-secondary)]">
               {socialLinks.map((social) => (
-                <li key={social.id} className="flex items-center gap-2">
+                <li key={social.id} className="flex min-w-0 items-center gap-2">
                   <span className="text-[var(--primary)]">{social.name}:</span>
-                  <a href={social.url} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] transition-colors truncate">
+                  <a
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[var(--primary)] transition-colors truncate"
+                  >
                     {social.url.replace(/^https?:\/\//, "")}
                   </a>
                 </li>
@@ -170,15 +198,15 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-[var(--border-color)]">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-[var(--text-secondary)]">
+            <p className="text-center text-sm text-[var(--text-secondary)] md:text-left">
               {t("copyright")}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
               {links.legal.map((link) => (
                 <Link
                   key={link.key}
                   href={link.href}
-                  className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex min-h-11 items-center text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
                   {t(link.key)}
                 </Link>

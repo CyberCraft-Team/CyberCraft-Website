@@ -18,24 +18,24 @@
      The lightness grading from the previous cyan palette is preserved --
      the lead colour still sits highest and the status hues recede -- only
      the hues moved, so every contrast decision downstream still holds. */
-  --primary: #8cff2e;      /* L* 89.7  acid lime */
+  --primary: #8cff2e; /* L* 89.7  acid lime */
   --primary-dark: #5fc400;
-  --secondary: #ff2e88;    /* magenta, status and accents only */
-  --accent: #5fc400;       /* deep acid, the pressed/active state */
+  --secondary: #ff2e88; /* magenta, status and accents only */
+  --accent: #5fc400; /* deep acid, the pressed/active state */
 
   /* Status. Each hue is tuned separately: at full saturation green sits
      about 30 L* points above red, so one shared lightness does not work. */
-  --success: #5fc400;      /* L* 70.4 */
-  --warning: #ffb020;      /* L* 78.0 */
-  --error: #ff5c5c;        /* L* 61.4 */
+  --success: #5fc400; /* L* 70.4 */
+  --warning: #ffb020; /* L* 78.0 */
+  --error: #ff5c5c; /* L* 61.4 */
   --info: #8cff2e;
 
   /* Surfaces. Every step is a visible L* increment, and the ladder runs
      the right way: an input sits below its card, a popover above it. The
      hue shifted from violet-black to the cool blue-black v2 uses. */
-  --bg-dark: #06080c;        /* page */
+  --bg-dark: #06080c; /* page */
   --surface-sunken: #090d12; /* input, textarea */
-  --bg-card: #121a24;        /* card, panel */
+  --bg-card: #121a24; /* card, panel */
   --surface-raised: #1b2530; /* popover, dropdown, modal */
   --bg-sidebar: #090d12;
   --border-color: #26333f;
@@ -514,4 +514,83 @@ section {
 .scroll-reveal.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* The public mobile navigation reserves its own space, including the home indicator. */
+.mobile-bottom-navigation {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+.mobile-bottom-item {
+  display: flex;
+  min-width: 0;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-top: 2px solid transparent;
+  padding: 8px 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition:
+    color 150ms,
+    background-color 150ms;
+}
+.mobile-bottom-item:hover,
+.mobile-bottom-item:focus-visible {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+.mobile-bottom-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+.mobile-bottom-item-active {
+  border-top-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+@media (max-width: 1279px) {
+  body:has([data-mobile-bottom-navigation="xl"]) {
+    padding-bottom: calc(73px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(73px + env(safe-area-inset-bottom));
+  }
+  html:has([data-mobile-bottom-navigation="xl"]) {
+    scroll-padding-bottom: calc(73px + env(safe-area-inset-bottom));
+  }
+}
+
+.mobile-navigation-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  display: flex;
+  max-height: 85dvh;
+  width: 100%;
+  max-width: none;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 0;
+  border-top-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  background: var(--bg-card);
+  padding: 0 0 env(safe-area-inset-bottom);
+  translate: 0 0;
+  transform: none;
+}
+@media (max-width: 1023px) {
+  body:has([data-mobile-bottom-navigation="lg"]) {
+    padding-bottom: calc(73px + env(safe-area-inset-bottom));
+  }
+  html:has([data-mobile-bottom-navigation="lg"]) {
+    scroll-padding-bottom: calc(73px + env(safe-area-inset-bottom));
+  }
 }

@@ -6,6 +6,8 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig: NextConfig = {
   // Production build — standalone rejim (minimal output)
   output: "standalone",
+  // Keep development controls from covering the mobile navigation.
+  devIndicators: false,
   // Every backend call goes through /api/backend/<path>/ with the trailing
   // slash Django's APPEND_SLASH wants. Next's default is to answer such a
   // URL with a 308 to the slashless form, so each request was made twice --

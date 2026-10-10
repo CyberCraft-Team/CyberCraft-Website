@@ -1,5 +1,12 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import {
+  ManagementToolbar,
+  ManagementError,
+  ManagementEmpty,
+} from "@/components/dashboard/management";
+
 import { useState } from "react";
 import {
   Search,
@@ -76,7 +83,15 @@ const defaultFormData: ServerFormData = {
 };
 
 export default function PublicServersPage() {
-  const { servers, isLoading, mutate } = useAdminPublicServers();
+  const t = useTranslations("dashboard.copy");
+  const m = useTranslations("dashboard.management");
+  const locale = useLocale();
+  const {
+    servers,
+    isLoading,
+    isError: listError,
+    mutate,
+  } = useAdminPublicServers();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -86,7 +101,8 @@ export default function PublicServersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const filteredServers = servers.filter((server: any) =>
+  const filteredServers = servers.filter(
+    (server: any) =>
       server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       server.ip_address.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -98,7 +114,7 @@ export default function PublicServersPage() {
       case "maintenance":
         return <Wrench className="w-4 h-4 text-[var(--warning)]" />;
       default:
-        return <WifiOff className="w-4 h-4 text-red-500" />;
+        return <WifiOff className="w-4 h-4 text-destructive" />;
     }
   };
 
@@ -109,18 +125,18 @@ export default function PublicServersPage() {
       case "maintenance":
         return "bg-[var(--warning)]/20 text-[var(--warning)]";
       default:
-        return "bg-red-500/20 text-red-500";
+        return "bg-destructive/20 text-destructive";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "online":
-        return "Online";
+        return t("online");
       case "maintenance":
-        return "Texnik ishlar";
+        return t("maintenance");
       default:
-        return "Offline";
+        return t("offline");
     }
   };
 
@@ -173,7 +189,7 @@ export default function PublicServersPage() {
       mutate();
       setIsCreateOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Xatolik yuz berdi");
+      setError(err instanceof Error ? err.message : t("something_went_wrong"));
     } finally {
       setIsSubmitting(false);
     }
@@ -192,7 +208,7 @@ export default function PublicServersPage() {
       mutate();
       setIsEditOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Xatolik yuz berdi");
+      setError(err instanceof Error ? err.message : t("something_went_wrong"));
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +224,9 @@ export default function PublicServersPage() {
       mutate();
       setIsDeleteOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Server o'chirishda xato");
+      setError(
+        err instanceof Error ? err.message : t("could_not_delete_the_server"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -217,7 +235,7 @@ export default function PublicServersPage() {
   const renderForm = (isEdit: boolean = false) => (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+        <div className="p-3 rounded-lg bg-destructive/20 border border-destructive/30 text-destructive text-sm">
           {error}
         </div>
       )}
@@ -225,7 +243,7 @@ export default function PublicServersPage() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-name" : "create-name"}>
-            Server nomi
+            {t("server_name_133")}
           </Label>
           <Input
             id={isEdit ? "edit-name" : "create-name"}
@@ -239,11 +257,14 @@ export default function PublicServersPage() {
               }));
             }}
             placeholder="CyberCraft Main"
+            aria-label="CyberCraft Main"
             className="bg-[var(--bg-dark)] border-[var(--border-color)]"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={isEdit ? "edit-slug" : "create-slug"}>Slug</Label>
+          <Label htmlFor={isEdit ? "edit-slug" : "create-slug"}>
+            {t("slug_135")}
+          </Label>
           <Input
             id={isEdit ? "edit-slug" : "create-slug"}
             value={formData.slug}
@@ -251,6 +272,7 @@ export default function PublicServersPage() {
               setFormData((prev) => ({ ...prev, slug: e.target.value }))
             }
             placeholder="cybercraft-main"
+            aria-label="cybercraft-main"
             className="bg-[var(--bg-dark)] border-[var(--border-color)]"
           />
         </div>
@@ -258,7 +280,9 @@ export default function PublicServersPage() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor={isEdit ? "edit-ip" : "create-ip"}>IP manzil</Label>
+          <Label htmlFor={isEdit ? "edit-ip" : "create-ip"}>
+            {t("ip_address")}
+          </Label>
           <Input
             id={isEdit ? "edit-ip" : "create-ip"}
             value={formData.ip_address}
@@ -266,6 +290,7 @@ export default function PublicServersPage() {
               setFormData((prev) => ({ ...prev, ip_address: e.target.value }))
             }
             placeholder="play.cybercraft.uz"
+            aria-label="play.cybercraft.uz"
             className="bg-[var(--bg-dark)] border-[var(--border-color)]"
           />
         </div>
@@ -282,6 +307,7 @@ export default function PublicServersPage() {
               }))
             }
             placeholder="25565"
+            aria-label="25565"
             className="bg-[var(--bg-dark)] border-[var(--border-color)]"
           />
         </div>
@@ -290,7 +316,7 @@ export default function PublicServersPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-status" : "create-status"}>
-            Holat
+            {t("status")}
           </Label>
           <Select
             value={formData.status}
@@ -299,18 +325,18 @@ export default function PublicServersPage() {
             }
           >
             <SelectTrigger className="bg-[var(--bg-dark)] border-[var(--border-color)]">
-              <SelectValue placeholder="Holatni tanlang" />
+              <SelectValue placeholder={t("select_status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="online">Online</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="maintenance">Texnik ishlar</SelectItem>
+              <SelectItem value="online">{t("online")}</SelectItem>
+              <SelectItem value="offline">{t("offline")}</SelectItem>
+              <SelectItem value="maintenance">{t("maintenance")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-current" : "create-current"}>
-            Hozirgi o'yinchilar
+            {t("current_players")}
           </Label>
           <Input
             id={isEdit ? "edit-current" : "create-current"}
@@ -327,7 +353,7 @@ export default function PublicServersPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-max" : "create-max"}>
-            Maksimum o'yinchilar
+            {t("maximum_players")}
           </Label>
           <Input
             id={isEdit ? "edit-max" : "create-max"}
@@ -347,7 +373,7 @@ export default function PublicServersPage() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-minram" : "create-minram"}>
-            Minimum RAM (MB)
+            {t("minimum_ram_mb")}
           </Label>
           <Input
             id={isEdit ? "edit-minram" : "create-minram"}
@@ -364,7 +390,7 @@ export default function PublicServersPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor={isEdit ? "edit-maxram" : "create-maxram"}>
-            Maksimum RAM (MB)
+            {t("maximum_ram_mb")}
           </Label>
           <Input
             id={isEdit ? "edit-maxram" : "create-maxram"}
@@ -382,14 +408,16 @@ export default function PublicServersPage() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={isEdit ? "edit-desc" : "create-desc"}>Tavsif</Label>
+        <Label htmlFor={isEdit ? "edit-desc" : "create-desc"}>
+          {t("description")}
+        </Label>
         <Textarea
           id={isEdit ? "edit-desc" : "create-desc"}
           value={formData.description}
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, description: e.target.value }))
           }
-          placeholder="Server haqida qisqacha ma'lumot..."
+          placeholder={t("briefly_describe_this_server")}
           className="bg-[var(--bg-dark)] border-[var(--border-color)] min-h-[80px]"
         />
       </div>
@@ -408,21 +436,21 @@ export default function PublicServersPage() {
           className="rounded border-[var(--border-color)] w-4 h-4 accent-[var(--primary)]"
         />
         <Label htmlFor={isEdit ? "edit-whitelist" : "create-whitelist"}>
-          Whitelist yoqilgan
+          {t("whitelist_enabled")}
         </Label>
       </div>
     </div>
   );
 
   return (
-    <div className="p-8">
+    <div className="management-page">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-            Public Serverlar
+            {t("public_servers")}
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">
-            Tashqi serverlarni boshqarish va sozlash
+            {t("manage_the_external_servers_listed_on_your_platform")}
           </p>
         </div>
         <Button
@@ -430,35 +458,51 @@ export default function PublicServersPage() {
           className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-[var(--bg-dark)]"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Yangi server
+          {t("add_server")}
         </Button>
       </div>
 
       <div className="relative mb-6">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
         <Input
-          placeholder="Serverlarni qidirish..."
+          placeholder={t("search_servers")}
+          aria-label={t("search_servers")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-12 bg-[var(--bg-card)] border-[var(--border-color)]"
         />
       </div>
 
-      {isLoading ? (
+      <ManagementToolbar
+        count={servers.length}
+        shown={filteredServers.length}
+        loading={isLoading || Boolean(listError)}
+        onRefresh={async () => {
+          await mutate();
+        }}
+      />
+
+      {listError ? (
+        <ManagementError
+          onRetry={async () => {
+            await mutate();
+          }}
+        />
+      ) : isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
         </div>
       ) : filteredServers.length === 0 ? (
-        <Card className="cyber-card border-[var(--border-color)] p-12">
+        <Card className="cyber-card border-[var(--border-color)] p-6 sm:p-12">
           <div className="text-center">
             <Server className="w-16 h-16 mx-auto mb-4 text-[var(--text-secondary)]" />
             <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
-              Serverlar topilmadi
+              {t("no_servers_found")}
             </h3>
             <p className="text-[var(--text-secondary)] mb-6">
               {searchQuery
-                ? "Qidiruv bo'yicha serverlar topilmadi"
-                : "Hozircha public serverlar mavjud emas"}
+                ? t("no_servers_match_your_search")
+                : t("add_an_external_server_to_your_public_listing")}
             </p>
             {!searchQuery && (
               <Button
@@ -466,13 +510,13 @@ export default function PublicServersPage() {
                 className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-[var(--bg-dark)]"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Birinchi serverni qo'shing
+                {t("add_your_first_server")}
               </Button>
             )}
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
           {filteredServers.map((server: any) => (
             <Card
               key={server.id}
@@ -496,14 +540,19 @@ export default function PublicServersPage() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        aria-label={m("actionsFor", { name: server.name })}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                      >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(server)}>
                         <Edit className="w-4 h-4 mr-2" />
-                        Tahrirlash
+                        {t("edit")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() =>
@@ -514,15 +563,15 @@ export default function PublicServersPage() {
                         }
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Serverga kirish
+                        {t("join_server")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleDelete(server)}
-                        className="text-red-500 focus:text-red-500"
+                        className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
-                        O'chirish
+                        {t("delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -575,12 +624,12 @@ export default function PublicServersPage() {
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent
-          className="bg-[var(--bg-card)] border-[var(--border-color)] max-w-2xl"
+          className="management-dialog bg-[var(--bg-card)] border-[var(--border-color)] max-w-2xl"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle className="text-[var(--text-primary)]">
-              Yangi server qo'shish
+              {t("add_public_server")}
             </DialogTitle>
           </DialogHeader>
           {renderForm(false)}
@@ -590,7 +639,7 @@ export default function PublicServersPage() {
               onClick={() => setIsCreateOpen(false)}
               disabled={isSubmitting}
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleSubmitCreate}
@@ -600,7 +649,7 @@ export default function PublicServersPage() {
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Yaratish"
+                t("create")
               )}
             </Button>
           </DialogFooter>
@@ -610,12 +659,12 @@ export default function PublicServersPage() {
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent
-          className="bg-[var(--bg-card)] border-[var(--border-color)] max-w-2xl"
+          className="management-dialog bg-[var(--bg-card)] border-[var(--border-color)] max-w-2xl"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle className="text-[var(--text-primary)]">
-              Serverni tahrirlash
+              {t("edit_server")}
             </DialogTitle>
           </DialogHeader>
           {renderForm(true)}
@@ -625,7 +674,7 @@ export default function PublicServersPage() {
               onClick={() => setIsEditOpen(false)}
               disabled={isSubmitting}
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleSubmitEdit}
@@ -635,7 +684,7 @@ export default function PublicServersPage() {
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Saqlash"
+                t("save")
               )}
             </Button>
           </DialogFooter>
@@ -644,17 +693,17 @@ export default function PublicServersPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="bg-[var(--bg-card)] border-[var(--border-color)] max-w-md">
+        <DialogContent className="management-dialog bg-[var(--bg-card)] border-[var(--border-color)] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[var(--text-primary)]">
-              Serverni o'chirish
+              {t("delete_server")}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-3">
             {/* The shared banner lives in renderForm, which this dialog does
                 not use, so a failed delete had nowhere to show itself. */}
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+              <div className="p-3 rounded-lg bg-destructive/20 border border-destructive/30 text-destructive text-sm">
                 {error}
               </div>
             )}
@@ -662,7 +711,7 @@ export default function PublicServersPage() {
               <span className="font-semibold text-[var(--text-primary)]">
                 {selectedServer?.name}
               </span>{" "}
-              serverini o'chirishni xohlaysizmi? Bu amalni qaytarib bo'lmaydi.
+              {t("server_this_action_cannot_be_undone")}
             </p>
           </div>
           <DialogFooter>
@@ -671,7 +720,7 @@ export default function PublicServersPage() {
               onClick={() => setIsDeleteOpen(false)}
               disabled={isSubmitting}
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -681,7 +730,7 @@ export default function PublicServersPage() {
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "O'chirish"
+                t("delete")
               )}
             </Button>
           </DialogFooter>

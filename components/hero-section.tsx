@@ -22,9 +22,8 @@ export function HeroSection() {
   const revealRef = useScrollRevealGroup({ threshold: 0.1, rootMargin: "0px" });
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
-
   return (
-    <section className="relative overflow-hidden min-h-[90vh] flex items-center justify-center">
+    <section className="relative overflow-hidden min-h-[calc(100svh-4rem)] py-12 sm:py-16 md:min-h-[90vh] md:py-20 flex items-center justify-center">
       {/* Background with gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-dark)] via-[#0d1015] to-[var(--bg-dark)]" />
 
@@ -34,7 +33,10 @@ export function HeroSection() {
       {/* Animated background elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[var(--primary)]/5 rounded-full blur-[200px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[var(--accent)]/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[var(--accent)]/5 rounded-full blur-[200px] animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
       </div>
 
       {/* Grid pattern overlay */}
@@ -47,22 +49,24 @@ export function HeroSection() {
         >
           {/* Status badge */}
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-float"
+            className="inline-flex items-center gap-2 max-w-full px-3 py-2 sm:px-4 rounded-full glass mb-6 sm:mb-8 animate-float"
             data-reveal="fade-down"
             data-delay="0"
           >
             {isError ? (
               <>
-                <span className="w-2.5 h-2.5 rounded-full bg-error" />
+                <span className="w-2.5 h-2.5 shrink-0 rounded-full bg-error" />
                 <span className="text-sm text-error font-medium">
                   Serverga ulanib bo'lmadi
                 </span>
               </>
             ) : (
               <>
-                <span className="w-2.5 h-2.5 rounded-full status-online animate-pulse" />
+                <span className="w-2.5 h-2.5 shrink-0 rounded-full status-online animate-pulse" />
                 <span className="text-sm text-[var(--text-secondary)] font-medium">
-                  Serverlar ishlayapti • {isLoading ? "..." : stats?.online_players ?? "--"} ta o'yinchi online
+                  Serverlar ishlayapti •{" "}
+                  {isLoading ? "..." : (stats?.online_players ?? "--")} ta
+                  o'yinchi online
                 </span>
               </>
             )}
@@ -72,7 +76,7 @@ export function HeroSection() {
               normal sans, so the hero drops to about 45% of the size it
               carried before to occupy the same measure. */}
           <h1
-            className="font-pixel text-[28px] md:text-[52px] leading-[1.3] mb-8"
+            className="font-pixel text-[clamp(1.25rem,7vw,1.75rem)] md:text-[52px] leading-[1.3] mb-6 sm:mb-8"
             data-reveal="blur-in"
             data-delay="150"
           >
@@ -81,73 +85,85 @@ export function HeroSection() {
           </h1>
 
           {/* Stats cards */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-12">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 md:flex md:flex-wrap md:justify-center md:gap-6 mb-8 md:mb-12">
             <div
-              className="cyber-card flex items-center gap-4 px-5 py-4 md:px-6 md:py-5"
+              className="cyber-card flex min-w-0 flex-col items-center gap-2 px-2 py-4 md:flex-row md:gap-4 md:px-6 md:py-5"
               data-reveal="fade-up"
               data-delay="300"
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[var(--primary)]/20 flex items-center justify-center">
-                <Users className="w-6 h-6 md:w-7 md:h-7 text-[var(--primary)]" />
+              <div className="w-9 h-9 shrink-0 md:w-14 md:h-14 rounded-xl bg-[var(--primary)]/20 flex items-center justify-center">
+                <Users className="w-5 h-5 md:w-7 md:h-7 text-[var(--primary)]" />
               </div>
-              <div className="text-left">
+              <div className="min-w-0 text-center md:text-left">
                 {isLoading ? (
                   <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
                 ) : isError ? (
-                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">--</p>
+                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">
+                    --
+                  </p>
                 ) : (
                   <p className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] neon-cyan">
                     {stats?.online_players ?? "--"}
                   </p>
                 )}
-                <p className="text-xs md:text-sm text-[var(--text-secondary)]">Hozir onlayn</p>
+                <p className="text-[11px] leading-relaxed md:text-sm text-[var(--text-secondary)]">
+                  Hozir onlayn
+                </p>
               </div>
             </div>
 
             <div
-              className="cyber-card flex items-center gap-4 px-5 py-4 md:px-6 md:py-5"
+              className="cyber-card flex min-w-0 flex-col items-center gap-2 px-2 py-4 md:flex-row md:gap-4 md:px-6 md:py-5"
               data-reveal="fade-up"
               data-delay="400"
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[var(--accent)]/20 flex items-center justify-center">
-                <Trophy className="w-6 h-6 md:w-7 md:h-7 text-[var(--accent)]" />
+              <div className="w-9 h-9 shrink-0 md:w-14 md:h-14 rounded-xl bg-[var(--accent)]/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 md:w-7 md:h-7 text-[var(--accent)]" />
               </div>
-              <div className="text-left">
+              <div className="min-w-0 text-center md:text-left">
                 {isLoading ? (
                   <Loader2 className="w-6 h-6 text-[var(--accent)] animate-spin" />
                 ) : isError ? (
-                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">--</p>
+                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">
+                    --
+                  </p>
                 ) : (
                   <p className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] neon-cyan">
                     {stats?.max_online ?? "--"}
                   </p>
                 )}
-                <p className="text-xs md:text-sm text-[var(--text-secondary)]">Rekord onlayn</p>
+                <p className="text-[11px] leading-relaxed md:text-sm text-[var(--text-secondary)]">
+                  Rekord onlayn
+                </p>
               </div>
             </div>
 
             <div
-              className="cyber-card flex items-center gap-4 px-5 py-4 md:px-6 md:py-5"
+              className="cyber-card flex min-w-0 flex-col items-center gap-2 px-2 py-4 md:flex-row md:gap-4 md:px-6 md:py-5"
               data-reveal="fade-up"
               data-delay="500"
             >
               {/* Was magenta. In this palette magenta carries status, so
                   using it to decorate a neutral stat put a warning colour
                   on a number that is not one. */}
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-[var(--primary)]/15 flex items-center justify-center">
-                <Server className="w-6 h-6 md:w-7 md:h-7 text-[var(--primary)]" />
+              <div className="w-9 h-9 shrink-0 md:w-14 md:h-14 bg-[var(--primary)]/15 flex items-center justify-center">
+                <Server className="w-5 h-5 md:w-7 md:h-7 text-[var(--primary)]" />
               </div>
-              <div className="text-left">
+              <div className="min-w-0 text-center md:text-left">
                 {isLoading ? (
                   <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
                 ) : isError ? (
-                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">--</p>
+                  <p className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)]">
+                    --
+                  </p>
                 ) : (
                   <p className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] neon-cyan">
                     {stats?.total_registered?.toLocaleString() ?? "--"}
                   </p>
                 )}
-                <p className="text-xs md:text-sm text-[var(--text-secondary)]">Ro'yxatdan o'tgan</p>
+                <p className="text-[11px] leading-relaxed md:text-sm text-[var(--text-secondary)]">
+                  Ro'yxatdan o'tgan
+                </p>
               </div>
             </div>
           </div>
@@ -168,7 +184,7 @@ export function HeroSection() {
           >
             <Button
               size="lg"
-              className="cyber-btn px-10 py-7 text-lg font-bold animate-pulse-glow group cursor-pointer"
+              className="cyber-btn min-h-12 w-full px-4 py-6 text-base sm:w-auto sm:px-10 sm:py-7 sm:text-lg font-bold animate-pulse-glow group cursor-pointer"
               onClick={() => setIsDownloadOpen(true)}
             >
               <Download className="w-5 h-5 mr-2 group-hover:animate-bounce" />
@@ -177,7 +193,7 @@ export function HeroSection() {
             <Button
               size="lg"
               variant="outline"
-              className="border-[var(--border-color)] hover:border-[var(--primary)] hover:text-[var(--primary)] bg-transparent/50 backdrop-blur-sm px-10 py-7 text-lg transition-all group"
+              className="border-[var(--border-color)] hover:border-[var(--primary)] hover:text-[var(--primary)] bg-transparent/50 backdrop-blur-sm min-h-12 w-full px-4 py-6 text-base sm:w-auto sm:px-10 sm:py-7 sm:text-lg transition-all group"
             >
               <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Qanday o'ynash

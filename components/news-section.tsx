@@ -1,6 +1,13 @@
 "use client";
 
-import { CalendarDays, ChevronRight, Newspaper, Loader2, Tag, ArrowRight } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronRight,
+  Newspaper,
+  Loader2,
+  Tag,
+  ArrowRight,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { useNews } from "@/lib/api/hooks";
@@ -13,19 +20,19 @@ export function NewsSection() {
   const gridRevealRef = useScrollRevealGroup({ threshold: 0.05 });
 
   return (
-    <section className="py-20 bg-[var(--bg-card)]" id="news">
+    <section className="py-12 sm:py-16 lg:py-20 bg-[var(--bg-card)]" id="news">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div
-          className="flex items-center justify-between mb-10"
+          className="flex flex-wrap items-center justify-between gap-4 mb-8 sm:mb-10"
           ref={headerRevealRef as React.RefObject<HTMLDivElement>}
         >
           <div data-reveal="fade-right" data-delay="0">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/20 flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-xl bg-[var(--primary)]/20 flex items-center justify-center">
                 <Newspaper className="w-5 h-5 text-[var(--primary)]" />
               </div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
                 <span className="text-[var(--text-primary)]">SO'NGGI </span>
                 <span className="text-[var(--primary)]">YANGILIKLAR</span>
               </h2>
@@ -79,15 +86,17 @@ export function NewsSection() {
                 <Link
                   key={item.id}
                   href={`/news/${item.id}`}
-                  className={`cyber-card overflow-hidden group ${index === 0 ? "md:col-span-2 md:row-span-2" : ""
-                    }`}
+                  className={`cyber-card min-w-0 overflow-hidden group ${
+                    index === 0 ? "md:col-span-2 md:row-span-2" : ""
+                  }`}
                   data-reveal={index === 0 ? "scale-up" : "fade-up"}
                   data-delay={String(index * 120)}
                 >
                   {/* Image placeholder */}
                   <div
-                    className={`relative bg-gradient-to-br from-[var(--primary)]/20 to-[var(--accent)]/10 ${index === 0 ? "h-48 md:h-64" : "h-36"
-                      }`}
+                    className={`relative bg-gradient-to-br from-[var(--primary)]/20 to-[var(--accent)]/10 ${
+                      index === 0 ? "h-48 md:h-64" : "h-36"
+                    }`}
                   >
                     {item.image_url ? (
                       <Image
@@ -106,9 +115,9 @@ export function NewsSection() {
                       <span
                         className="px-3 py-1 text-xs font-bold rounded-full backdrop-blur-sm"
                         style={{
-                          background: `color-mix(in srgb, ${item.category_color || 'var(--primary)'} 20%, transparent)`,
-                          color: item.category_color || 'var(--primary)',
-                          border: `1px solid ${item.category_color || 'var(--primary)'}40`
+                          background: `color-mix(in srgb, ${item.category_color || "var(--primary)"} 20%, transparent)`,
+                          color: item.category_color || "var(--primary)",
+                          border: `1px solid ${item.category_color || "var(--primary)"}40`,
                         }}
                       >
                         {item.category}
@@ -117,7 +126,7 @@ export function NewsSection() {
                   </div>
 
                   {/* Content */}
-                  <div className={`p-4 ${index === 0 ? "md:p-6" : ""}`}>
+                  <div className={`p-4 min-w-0 ${index === 0 ? "md:p-6" : ""}`}>
                     <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] mb-2">
                       <CalendarDays className="w-3.5 h-3.5" />
                       <span>
@@ -128,8 +137,11 @@ export function NewsSection() {
                         })}
                       </span>
                     </div>
-                    <h3 className={`font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors ${index === 0 ? "text-xl md:text-2xl" : "text-base"
-                      }`}>
+                    <h3
+                      className={`break-words font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors ${
+                        index === 0 ? "text-xl md:text-2xl" : "text-base"
+                      }`}
+                    >
                       {item.title}
                     </h3>
                     {(index === 0 || index === 1 || index === 2) && (

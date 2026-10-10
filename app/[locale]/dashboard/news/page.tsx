@@ -1,7 +1,15 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import {
+  ManagementToolbar,
+  ManagementError,
+  ManagementEmpty,
+} from "@/components/dashboard/management";
+
 import type React from "react";
 
+import { Link } from "@/i18n/navigation";
 import { useState, useEffect } from "react";
 import {
   Newspaper,
@@ -50,7 +58,13 @@ interface NewsCategory {
 }
 
 export default function NewsPage() {
-  const { news, isLoading, mutate } = useAdminNews();
+  const t = useTranslations("dashboard.copy");
+  const m = useTranslations("dashboard.management");
+  const locale = useLocale();
+  const { news, isLoading, isError: listError, mutate } = useAdminNews();
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +76,6 @@ export default function NewsPage() {
     excerpt: "",
     content: "",
     category: "",
-    image_url: "",
   });
 
   // Fetch categories on component mount
@@ -83,7 +96,7 @@ export default function NewsPage() {
           }));
         }
       } catch (error) {
-        console.error("Kategoriyalarni yuklashda xato:", error);
+        setCategoryError(true);
       } finally {
         setCategoriesLoading(false);
       }
@@ -98,6 +111,7 @@ export default function NewsPage() {
 
   const handleCreateNews = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
 
     // Validate category is selected
     if (
@@ -105,7 +119,7 @@ export default function NewsPage() {
       formData.category === "loading" ||
       formData.category === "empty"
     ) {
-      alert("Iltimos, kategoriyani tanlang");
+      setActionError(t("please_select_a_category"));
       return;
     }
 
@@ -116,7 +130,7 @@ export default function NewsPage() {
 
       // Validate category ID is a valid number
       if (isNaN(categoryId)) {
-        alert("Kategoriya noto'g'ri tanlangan");
+        setActionError(t("invalid_category"));
         setIsSubmitting(false);
         return;
       }
@@ -128,7 +142,10 @@ export default function NewsPage() {
         category: categoryId,
       };
 
-      await apiFetch("admin/news/", { method: "POST", json: requestBody });
+      await apiFetch(
+        editingId === null ? "admin/news/" : `admin/news/${editingId}/`,
+        { method: editingId === null ? "POST" : "PATCH", json: requestBody },
+      );
 
       setIsCreateOpen(false);
       setFormData({
@@ -136,12 +153,13 @@ export default function NewsPage() {
         excerpt: "",
         content: "",
         category: categories.length > 0 ? categories[0].id.toString() : "",
-        image_url: "",
       });
       mutate();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Yangilik yaratishda xato",
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : t("could_not_create_the_news_post"),
       );
     } finally {
       setIsSubmitting(false);
@@ -149,52 +167,83 @@ export default function NewsPage() {
   };
 
   const handleDeleteNews = async (newsId: number) => {
-    if (!confirm("Yangilikni o'chirishni tasdiqlaysizmi?")) return;
+    if (!confirm(t("delete_this_news_post"))) return;
 
     try {
       await apiFetch(`admin/news/${newsId}/`, { method: "DELETE" });
       mutate();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Yangilik o'chirishda xato",
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : t("could_not_delete_the_news_post"),
       );
     }
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="management-page">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-            Yangiliklar
+            {t("news")}
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">
-            Yangiliklar va e'lonlarni boshqarish
+            {t("manage_announcements_and_news_for_your_community")}
           </p>
         </div>
 
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="cyber-btn">
+            <Button
+              className="cyber-btn"
+              onClick={() => {
+                setEditingId(null);
+                setActionError(null);
+                setFormData({
+                  title: "",
+                  excerpt: "",
+                  content: "",
+                  category: categories[0]?.id.toString() || "",
+                });
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Yangi yangilik
+              {t("add_news_post")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="cyber-card border-[var(--border-color)] max-w-2xl">
+          <DialogContent className="management-dialog cyber-card border-[var(--border-color)] max-w-2xl">
             <DialogHeader>
               <DialogTitle className="text-[var(--text-primary)]">
-                Yangi yangilik yaratish
+                {editingId === null ? t("create_a_news_post") : t("edit")}
               </DialogTitle>
             </DialogHeader>
+            {categoryError && (
+              <p role="alert" className="text-destructive">
+                {m("categoryFailed")}
+              </p>
+            )}
+            {actionError && (
+              <p role="alert" className="text-destructive">
+                {actionError}
+              </p>
+            )}
             <form onSubmit={handleCreateNews} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label className="text-[var(--text-secondary)]">Sarlavha</Label>
+                <Label
+                  htmlFor="news-field-1"
+                  className="text-[var(--text-secondary)]"
+                >
+                  {t("title")}
+                </Label>
                 <Input
+                  id="news-field-1"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  placeholder="Yangilik sarlavhasi"
+                  placeholder={t("news_post_title")}
+                  aria-label={t("news_post_title")}
                   className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                   required
                 />
@@ -202,8 +251,11 @@ export default function NewsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[var(--text-secondary)]">
-                    Kategoriya
+                  <Label
+                    htmlFor="news-field-2"
+                    className="text-[var(--text-secondary)]"
+                  >
+                    {t("category")}
                   </Label>
                   <Select
                     value={formData.category}
@@ -211,13 +263,16 @@ export default function NewsPage() {
                       setFormData({ ...formData, category: v })
                     }
                   >
-                    <SelectTrigger className="bg-[var(--bg-dark)] border-[var(--border-color)]">
+                    <SelectTrigger
+                      id="news-field-2"
+                      className="bg-[var(--bg-dark)] border-[var(--border-color)]"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {categoriesLoading ? (
                         <SelectItem value="loading" disabled>
-                          Yuklanmoqda...
+                          {t("loading")}
                         </SelectItem>
                       ) : categories.length > 0 ? (
                         categories.map((cat) => (
@@ -233,52 +288,47 @@ export default function NewsPage() {
                         ))
                       ) : (
                         <SelectItem value="empty" disabled>
-                          Kategoriyalar topilmadi
+                          {t("no_categories_found")}
                         </SelectItem>
                       )}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[var(--text-secondary)]">
-                    Rasm URL (ixtiyoriy)
-                  </Label>
-                  <Input
-                    value={formData.image_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, image_url: e.target.value })
-                    }
-                    placeholder="https://example.com/image.jpg"
-                    className="bg-[var(--bg-dark)] border-[var(--border-color)]"
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[var(--text-secondary)]">
-                  Qisqa tavsif
+                <Label
+                  htmlFor="news-field-3"
+                  className="text-[var(--text-secondary)]"
+                >
+                  {t("summary")}
                 </Label>
                 <Textarea
+                  id="news-field-3"
                   value={formData.excerpt}
                   onChange={(e) =>
                     setFormData({ ...formData, excerpt: e.target.value })
                   }
-                  placeholder="Yangilik haqida qisqacha..."
+                  placeholder={t("a_short_introduction_to_the_news")}
                   className="bg-[var(--bg-dark)] border-[var(--border-color)] min-h-[80px]"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[var(--text-secondary)]">
-                  To'liq matn
+                <Label
+                  htmlFor="news-field-4"
+                  className="text-[var(--text-secondary)]"
+                >
+                  {t("full_content")}
                 </Label>
                 <Textarea
+                  id="news-field-4"
                   value={formData.content}
                   onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
-                  placeholder="Yangilik to'liq matni..."
+                  placeholder={t("write_the_full_news_post")}
                   className="bg-[var(--bg-dark)] border-[var(--border-color)] min-h-[200px]"
                   required
                 />
@@ -291,20 +341,24 @@ export default function NewsPage() {
                   onClick={() => setIsCreateOpen(false)}
                   className="border-[var(--border-color)]"
                 >
-                  Bekor qilish
+                  {t("cancel")}
                 </Button>
                 <Button
                   type="submit"
                   className="cyber-btn"
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting || categoriesLoading || categories.length === 0
+                  }
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Yaratilmoqda...
+                      {t("creating")}
                     </>
+                  ) : editingId === null ? (
+                    t("create")
                   ) : (
-                    "Yaratish"
+                    t("save")
                   )}
                 </Button>
               </div>
@@ -316,14 +370,35 @@ export default function NewsPage() {
       <div className="relative mb-6">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
         <Input
-          placeholder="Yangiliklar qidirish..."
+          placeholder={t("search_news")}
+          aria-label={t("search_news")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-12 bg-[var(--bg-card)] border-[var(--border-color)]"
         />
       </div>
 
-      {isLoading ? (
+      {actionError && !isCreateOpen && (
+        <p role="alert" className="text-destructive">
+          {actionError}
+        </p>
+      )}
+      <ManagementToolbar
+        count={news.length}
+        shown={filteredNews.length}
+        loading={isLoading || Boolean(listError)}
+        onRefresh={async () => {
+          await mutate();
+        }}
+      />
+
+      {listError ? (
+        <ManagementError
+          onRetry={async () => {
+            await mutate();
+          }}
+        />
+      ) : isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
         </div>
@@ -331,26 +406,24 @@ export default function NewsPage() {
         <div className="flex flex-col items-center justify-center py-16">
           <Newspaper className="w-16 h-16 text-[var(--text-secondary)] mb-4 opacity-50" />
           <p className="text-[var(--text-secondary)] text-lg">
-            {searchQuery
-              ? "Hech qanday yangilik topilmadi"
-              : "Hali yangilik yo'q"}
+            {searchQuery ? t("no_news_posts_found") : t("no_news_posts_yet")}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {filteredNews.map((item: any) => (
             <Card
               key={item.id}
-              className="group cyber-card border-[var(--border-color)] overflow-hidden hover:border-[var(--primary)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--primary)]/20 cursor-pointer"
+              className="group cyber-card border-[var(--border-color)] overflow-hidden hover:border-[var(--primary)] transition-all duration-300 "
             >
               <CardContent className="p-0">
                 {/* Image/Thumbnail with Gradient Overlay */}
                 <div className="relative h-48 overflow-hidden">
-                  {item.image_url ? (
+                  {item.image ? (
                     <>
                       <div
                         className="absolute inset-0 bg-cover bg-center transform group-hover:scale-110 transition-transform duration-500"
-                        style={{ backgroundImage: `url(${item.image_url})` }}
+                        style={{ backgroundImage: `url(${item.image})` }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-[var(--bg-card)]/50 to-transparent" />
                     </>
@@ -368,23 +441,29 @@ export default function NewsPage() {
                     <span
                       className="px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-lg"
                       style={{
-                        backgroundColor: `${item.category_color}40`,
-                        color: item.category_color,
-                        border: `1px solid ${item.category_color}60`,
+                        backgroundColor: "var(--bg-dark)",
+                        color:
+                          categories.find(
+                            (category) => category.id === item.category,
+                          )?.color || "var(--primary)",
+                        border: "1px solid var(--border-color)",
                       }}
                     >
-                      {item.category}
+                      {categories.find(
+                        (category) => category.id === item.category,
+                      )?.name || "—"}
                     </span>
                   </div>
 
                   {/* Actions Menu - Floating */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="absolute top-4 right-4 ">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md hover:bg-[var(--bg-card)] shadow-lg"
+                          aria-label={m("actionsFor", { name: item.title })}
+                          className="h-11 w-11 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md hover:bg-[var(--bg-card)] shadow-lg"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
@@ -393,20 +472,34 @@ export default function NewsPage() {
                         align="end"
                         className="cyber-card border-[var(--border-color)]"
                       >
-                        <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Ko'rish
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Tahrirlash
+                        <DropdownMenuItem asChild disabled={!item.is_published}>
+                          <Link href={`/news/${item.id}`}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            {t("view")}
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-red-500 focus:text-red-600"
+                          onClick={() => {
+                            setEditingId(item.id);
+                            setActionError(null);
+                            setFormData({
+                              title: item.title,
+                              excerpt: item.excerpt,
+                              content: item.content,
+                              category: String(item.category),
+                            });
+                            setIsCreateOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          {t("edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-red-600"
                           onClick={() => handleDeleteNews(item.id)}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          O'chirish
+                          {t("delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -419,18 +512,11 @@ export default function NewsPage() {
                   <div className="flex items-center gap-3 mb-3 text-xs text-[var(--text-secondary)]">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
-                      {new Date(item.date).toLocaleDateString("uz-UZ", {
+                      {new Date(item.created_at).toLocaleDateString(locale, {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })}
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-[var(--text-secondary)]" />
-                    <span className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center text-[10px] font-bold text-white">
-                        {item.author?.charAt(0).toUpperCase() || "A"}
-                      </div>
-                      {item.author}
                     </span>
                   </div>
 
@@ -445,22 +531,31 @@ export default function NewsPage() {
                   </p>
 
                   {/* Read More Indicator */}
-                  <div className="flex items-center gap-2 mt-4 text-sm font-medium text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-0 group-hover:translate-x-1">
-                    <span>To'liq o'qish</span>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {item.is_published ? (
+                    <Link
+                      href={`/news/${item.id}`}
+                      className="flex min-h-11 items-center gap-2 mt-4 text-sm font-medium text-primary hover:underline"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
+                      <span>{t("read_full_post")}</span>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </Link>
+                  ) : (
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      {m("draft")}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

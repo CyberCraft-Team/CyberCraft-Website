@@ -1,45 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import {
-  Menu,
-  X,
   User,
   Download,
   Gamepad2,
   LogOut,
   Loader2,
   LayoutDashboard,
-  Home,
-  Server,
-  Newspaper,
-  Vote,
-  ShoppingCart,
-  MessageSquare,
-  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTranslations } from "next-intl";
+import { LauncherDownloadModal } from "@/components/launcher-download-modal";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 
-// Labels are message keys in the "nav" namespace, not literals.
-const navLinks: { href: string; key: string; icon: LucideIcon }[] = [
-  { href: "/", key: "home", icon: Home },
-  { href: "/#servers", key: "servers", icon: Server },
-  { href: "/#news", key: "news", icon: Newspaper },
-  { href: "/#voting", key: "voting", icon: Vote },
-  { href: "/shop", key: "shop", icon: ShoppingCart },
-  { href: "/forum", key: "forum", icon: MessageSquare },
-];
+import { siteLinks as navLinks } from "@/components/site-links";
 
 export function Header() {
   const t = useTranslations("nav");
-  const [isOpen, setIsOpen] = useState(false);
+  const [launcherOpen, setLauncherOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState("/");
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({
@@ -125,19 +108,21 @@ export function Header() {
         if (el) {
           e.preventDefault();
           el.scrollIntoView({ behavior: "smooth" });
-          window.history.pushState(null, "", href);
-          setIsOpen(false);
+          window.history.pushState(
+            null,
+            "",
+            `${window.location.pathname}${hash}`,
+          );
         }
       }
       // 2. Same-page home click to top
       else if (href === "/" && pathname === "/") {
         e.preventDefault();
         window.scrollTo({ top: 0, behavior: "smooth" });
-        window.history.pushState(null, "", "/");
-        setIsOpen(false);
+        window.history.pushState(null, "", window.location.pathname);
       }
     },
-    [pathname]
+    [pathname],
   );
 
   // Cross-page scroll handling once homepage mounts
@@ -154,9 +139,12 @@ export function Header() {
     }
   }, [pathname]);
 
+  const openLauncher = () => {
+    setLauncherOpen(true);
+  };
+
   const handleLogout = async () => {
     await logout();
-    setIsOpen(false);
   };
 
   const canAccessDashboard = user?.is_staff || user?.is_superuser;
@@ -173,10 +161,12 @@ export function Header() {
 
     if (isAuthenticated && user) {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 2xl:gap-2">
           {user.cc_balance !== undefined && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/30">
-              <span className="text-[var(--primary)] font-bold">{user.cc_balance}</span>
+            <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/30">
+              <span className="text-[var(--primary)] font-bold">
+                {user.cc_balance}
+              </span>
               <span className="text-[var(--text-secondary)] text-xs">CC</span>
             </div>
           )}
@@ -196,7 +186,8 @@ export function Header() {
           <Link href="/cabinet">
             <Button
               variant="ghost"
-              className="text-[var(--text-primary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 gap-2"
+              className="max-w-32 gap-2 px-2 text-[var(--text-primary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 2xl:max-w-44"
+              title={user.username}
             >
               {user.skin_face_url ? (
                 <div className="w-6 h-6 rounded overflow-hidden">
@@ -213,7 +204,7 @@ export function Header() {
               ) : (
                 <User className="w-4 h-4" />
               )}
-              {user.username}
+              <span className="truncate">{user.username}</span>
             </Button>
           </Link>
           <Button
@@ -221,6 +212,8 @@ export function Header() {
             size="icon"
             className="text-[var(--text-secondary)] hover:text-error hover:bg-error/10"
             onClick={handleLogout}
+            aria-label={t("logout")}
+            title={t("logout")}
           >
             <LogOut className="w-4 h-4" />
           </Button>
@@ -238,109 +231,25 @@ export function Header() {
     );
   };
 
-  const renderMobileAuthSection = () => {
-    if (!mounted || isLoading) {
-      return (
-        <Button className="flex-1 cyber-btn" disabled>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          {t("loading")}
-        </Button>
-      );
-    }
-
-    if (isAuthenticated && user) {
-      return (
-        <Button
-          className="flex-1 bg-error/20 text-error hover:bg-error/30"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          {t("logout")}
-        </Button>
-      );
-    }
-
-    return (
-      <Link href="/login" className="flex-1">
-        <Button className="w-full cyber-btn">
-          <User className="w-4 h-4 mr-2" />
-          {t("login")}
-        </Button>
-      </Link>
-    );
-  };
-
   return (
-    <header className="sticky top-0 z-50 glass border-b border-[var(--border-color)]">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center glow-box">
-              <Gamepad2 className="w-6 h-6 text-[var(--bg-dark)]" />
-            </div>
-            <span className="font-pixel text-[13px] leading-none">
-              <span className="text-[var(--primary)]">CYBER</span>
-              <span className="text-[var(--text-primary)]">CRAFT</span>
-            </span>
-          </Link>
+    <>
+      <header className="sticky top-0 z-50 glass border-b border-[var(--border-color)]">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between gap-3">
+            <Link href="/" className="group flex shrink-0 items-center gap-2 2xl:gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] flex items-center justify-center glow-box">
+                <Gamepad2 className="w-6 h-6 text-[var(--bg-dark)]" />
+              </div>
+              <span className="font-pixel text-[13px] leading-none">
+                <span className="text-[var(--primary)]">CYBER</span>
+                <span className="text-[var(--text-primary)]">CRAFT</span>
+              </span>
+            </Link>
 
-          <nav ref={navRef} className="hidden xl:flex items-center gap-1 relative">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isHashLink = link.href.startsWith("/#");
-              const isActive = activeSection === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  scroll={isHashLink ? false : undefined}
-                  onClick={(e) => handleNavClick(e, link.href)}
-                  ref={(el) => {
-                    if (el) linkRefs.current.set(link.href, el);
-                    else linkRefs.current.delete(link.href);
-                  }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 relative z-10 ${
-                    isActive
-                      ? "text-[var(--primary)]"
-                      : "text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {t(link.key)}
-                </Link>
-              );
-            })}
-            {/* Sliding active indicator */}
-            <div
-              className="nav-active-indicator"
-              style={indicatorStyle}
-            />
-          </nav>
-
-          <div className="hidden xl:flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--bg-dark)] bg-transparent transition-all duration-300"
+            <nav
+              ref={navRef}
+              className="relative hidden shrink-0 items-center gap-0 xl:flex 2xl:gap-1"
             >
-              <Download className="w-4 h-4 mr-2" />
-              {t("launcher")}
-            </Button>
-
-            <LocaleSwitcher />
-            {renderAuthSection()}
-          </div>
-
-          <button
-            className="xl:hidden text-[var(--text-primary)] p-2 hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {isOpen && (
-          <div className="absolute top-full left-0 right-0 xl:hidden py-4 px-4 border-b border-[var(--border-color)] glass animate-in slide-in-from-top-2">
-            <nav className="flex flex-col gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isHashLink = link.href.startsWith("/#");
@@ -349,14 +258,18 @@ export function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    aria-current={
+                      isActive ? (isHashLink ? "location" : "page") : undefined
+                    }
                     scroll={isHashLink ? false : undefined}
-                    onClick={(e) => {
-                      handleNavClick(e, link.href);
-                      setIsOpen(false);
+                    onClick={(e) => handleNavClick(e, link.href)}
+                    ref={(el) => {
+                      if (el) linkRefs.current.set(link.href, el);
+                      else linkRefs.current.delete(link.href);
                     }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                    className={`flex items-center gap-1.5 whitespace-nowrap px-2 py-2 text-sm 2xl:gap-2 2xl:px-4 2xl:text-base rounded-lg transition-colors duration-200 relative z-10 ${
                       isActive
-                        ? "text-[var(--primary)] bg-[var(--primary)]/10 border-l-2 border-[var(--primary)]"
+                        ? "text-[var(--primary)]"
                         : "text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10"
                     }`}
                   >
@@ -365,33 +278,36 @@ export function Header() {
                   </Link>
                 );
               })}
-              {mounted && canAccessDashboard && (
-                <Link
-                  href="/admin-login"
-                  className="px-4 py-3 text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors flex items-center gap-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
-                </Link>
-              )}
-              <div className="flex gap-2 pt-4 mt-2 border-t border-[var(--border-color)]">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[var(--primary)] hover:text-[var(--bg-dark)]"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {t("launcher")}
-                </Button>
-                {renderMobileAuthSection()}
-              </div>
-              <div className="flex justify-center pt-2">
-                <LocaleSwitcher />
-              </div>
+              {/* Sliding active indicator */}
+              <div className="nav-active-indicator" style={indicatorStyle} />
             </nav>
+
+            <div className="hidden shrink-0 items-center gap-1 xl:flex 2xl:gap-3">
+              <Button
+                variant="outline"
+                onClick={openLauncher}
+                aria-label={t("launcher")}
+                title={t("launcher")}
+                className="h-10 px-3 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--bg-dark)] bg-transparent transition-all duration-300"
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                <span className="hidden 2xl:inline">{t("launcher")}</span>
+              </Button>
+
+              <LocaleSwitcher />
+              {renderAuthSection()}
+            </div>
+
+            <div className="xl:hidden [&_button]:min-h-11">
+              <LocaleSwitcher compact />
+            </div>
           </div>
-        )}
-      </div>
-    </header>
+        </div>
+      </header>
+      <LauncherDownloadModal
+        isOpen={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+      />
+    </>
   );
 }

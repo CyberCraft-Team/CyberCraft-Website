@@ -1,5 +1,12 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import {
+  ManagementToolbar,
+  ManagementError,
+  ManagementEmpty,
+} from "@/components/dashboard/management";
+
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -84,18 +91,25 @@ const DEFAULT_INSTALL_COMMANDS: Record<string, string> = {
 };
 
 export default function ServerTypesPage() {
+  const t = useTranslations("dashboard.copy");
+  const m = useTranslations("dashboard.management");
+  const locale = useLocale();
   const [serverTypes, setServerTypes] = useState<ServerTypeConfig[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<ServerTypeConfigDetail | null>(
-    null
+    null,
   );
   const [deletingType, setDeletingType] = useState<ServerTypeConfig | null>(
-    null
+    null,
   );
   const [saving, setSaving] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const [customType, setCustomType] = useState(false);
 
   const [formData, setFormData] = useState<CreateServerTypeConfigRequest>({
     server_type: "",
@@ -117,8 +131,8 @@ export default function ServerTypesPage() {
   const loadServerTypes = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const data = await minecraftAPI.getServerTypes(!showInactive);
-      console.log("[v0] Server types API response:", data);
 
       if (Array.isArray(data)) {
         setServerTypes(data);
@@ -126,11 +140,11 @@ export default function ServerTypesPage() {
         setServerTypes((data as { results: ServerTypeConfig[] }).results);
       } else {
         console.warn("[v0] Unexpected API response format:", data);
-        setServerTypes([]);
+        throw new Error("Unexpected server types response");
       }
     } catch (error) {
       console.error("Server turlarini yuklashda xato:", error);
-      setServerTypes([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -138,6 +152,8 @@ export default function ServerTypesPage() {
 
   const handleOpenCreate = () => {
     setEditingType(null);
+    setCustomType(false);
+    setActionError(null);
     setFormData({
       server_type: "",
       display_name: "",
@@ -154,6 +170,7 @@ export default function ServerTypesPage() {
   };
 
   const handleOpenEdit = async (serverType: ServerTypeConfig) => {
+    setActionError(null);
     try {
       const detail = await minecraftAPI.getServerType(serverType.server_type);
       setEditingType(detail);
@@ -171,11 +188,12 @@ export default function ServerTypesPage() {
       });
       setDialogOpen(true);
     } catch (error) {
-      console.error("Server turini yuklashda xato:", error);
+      setActionError(error instanceof Error ? error.message : m("loadFailed"));
     }
   };
 
   const handleServerTypeSelect = (type: string) => {
+    setCustomType(type === "custom");
     setFormData((prev) => ({
       ...prev,
       server_type: type,
@@ -189,8 +207,8 @@ export default function ServerTypesPage() {
         type === "forge"
           ? "libraries/net/minecraftforge/forge/*/unix_args.txt"
           : type === "neoforge"
-          ? "libraries/net/neoforged/neoforge/*/unix_args.txt"
-          : "",
+            ? "libraries/net/neoforged/neoforge/*/unix_args.txt"
+            : "",
       jar_file_name:
         type === "fabric" ? "fabric-server-launch.jar" : "server.jar",
     }));
@@ -210,7 +228,9 @@ export default function ServerTypesPage() {
       loadServerTypes();
     } catch (error) {
       console.error("Saqlashda xato:", error);
-      alert(error instanceof Error ? error.message : "Xato yuz berdi");
+      setActionError(
+        error instanceof Error ? error.message : t("something_went_wrong"),
+      );
     } finally {
       setSaving(false);
     }
@@ -227,24 +247,36 @@ export default function ServerTypesPage() {
       loadServerTypes();
     } catch (error) {
       console.error("O'chirishda xato:", error);
-      alert(error instanceof Error ? error.message : "O'chirishda xato");
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : t("could_not_delete_this_item"),
+      );
     } finally {
       setSaving(false);
     }
   };
 
+  const filteredTypes = serverTypes.filter((type) =>
+    `${type.display_name} ${type.server_type}`
+      .toLowerCase()
+      .includes(searchQuery.trim().toLowerCase()),
+  );
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="management-page">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-            Server Turlari
+            {t("server_types")}
           </h1>
           <p className="text-[var(--text-secondary)]">
-            Minecraft server turlarini boshqaring (install va run commandlar)
+            {t(
+              "configure_installation_and_launch_commands_for_each_server_type",
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <Switch
               id="showInactive"
@@ -255,71 +287,88 @@ export default function ServerTypesPage() {
               htmlFor="showInactive"
               className="text-[var(--text-secondary)]"
             >
-              Noaktiv turlarni ko'rsatish
+              {t("show_inactive_types")}
             </Label>
           </div>
           <Button onClick={handleOpenCreate} className="bg-[var(--primary)]">
             <Plus className="w-4 h-4 mr-2" />
-            Yangi tur qo'shish
+            {t("add_server_type")}
           </Button>
         </div>
       </div>
 
+      <ManagementToolbar
+        count={serverTypes.length}
+        shown={filteredTypes.length}
+        loading={loading || loadError}
+        onRefresh={loadServerTypes}
+      />
+      <Input
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={m("typeSearch")}
+        aria-label={m("typeSearch")}
+      />
+      {actionError && (
+        <p
+          role="alert"
+          className="border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          {actionError}
+        </p>
+      )}
       <Card className="cyber-card border-[var(--border-color)]">
         <CardHeader>
           <CardTitle className="text-[var(--text-primary)]">
-            Server Turlari Ro'yxati
+            {t("configured_server_types")}
           </CardTitle>
           <CardDescription>
-            Har bir server turi uchun install va run commandlarni sozlang
+            {t("installation_and_launch_settings_for_your_server_software")}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loadError ? (
+            <ManagementError onRetry={loadServerTypes} />
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
             </div>
-          ) : serverTypes.length === 0 ? (
-            <div className="text-center py-12">
-              <Server className="w-12 h-12 mx-auto mb-4 text-[var(--text-secondary)]" />
-              <p className="text-[var(--text-secondary)]">
-                Hech qanday server turi topilmadi
-              </p>
-              <Button
-                onClick={handleOpenCreate}
-                variant="outline"
-                className="mt-4 bg-transparent"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Birinchi turni qo'shing
-              </Button>
-            </div>
+          ) : filteredTypes.length === 0 ? (
+            <ManagementEmpty
+              searching={Boolean(searchQuery.trim())}
+              action={
+                <Button onClick={handleOpenCreate} variant="outline">
+                  <Plus className="mr-2 size-4" />
+                  {t("add_your_first_server_type")}
+                </Button>
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--border-color)]">
                   <TableHead className="text-[var(--text-secondary)]">
-                    Tur
+                    {t("type")}
                   </TableHead>
                   <TableHead className="text-[var(--text-secondary)]">
-                    Nomi
+                    {t("name")}
                   </TableHead>
                   <TableHead className="text-[var(--text-secondary)]">
-                    JAR fayl
+                    {t("jar_file")}
                   </TableHead>
                   <TableHead className="text-[var(--text-secondary)]">
-                    Installer
+                    {t("installer")}
                   </TableHead>
                   <TableHead className="text-[var(--text-secondary)]">
-                    Status
+                    {t("status")}
                   </TableHead>
                   <TableHead className="text-[var(--text-secondary)] text-right">
-                    Amallar
+                    {t("actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {serverTypes.map((type) => (
+                {filteredTypes.map((type) => (
                   <TableRow
                     key={type.server_type}
                     className="border-[var(--border-color)]"
@@ -342,11 +391,13 @@ export default function ServerTypesPage() {
                             <TooltipTrigger>
                               <Badge className="bg-orange-500/20 text-orange-400">
                                 <Download className="w-3 h-3 mr-1" />
-                                Installer
+                                {t("installer")}
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Bu tur avval install qilinishi kerak
+                              {t(
+                                "this_type_requires_installation_before_launch",
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -355,20 +406,20 @@ export default function ServerTypesPage() {
                           variant="secondary"
                           className="bg-[var(--bg-dark)]"
                         >
-                          Oddiy
+                          {t("standard")}
                         </Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {type.is_active ? (
-                        <Badge className="bg-green-500/20 text-green-400">
+                        <Badge className="bg-primary/20 text-primary">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          Aktiv
+                          {t("active")}
                         </Badge>
                       ) : (
-                        <Badge className="bg-red-500/20 text-red-400">
+                        <Badge className="bg-destructive/20 text-destructive">
                           <XCircle className="w-3 h-3 mr-1" />
-                          Noaktiv
+                          {t("inactive")}
                         </Badge>
                       )}
                     </TableCell>
@@ -378,6 +429,9 @@ export default function ServerTypesPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenEdit(type)}
+                          aria-label={m("editNamed", {
+                            name: type.display_name,
+                          })}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -386,9 +440,13 @@ export default function ServerTypesPage() {
                           size="icon"
                           onClick={() => {
                             setDeletingType(type);
+                            setActionError(null);
                             setDeleteDialogOpen(true);
                           }}
-                          className="text-red-500 hover:text-red-400"
+                          className="text-destructive hover:text-destructive"
+                          aria-label={m("deleteNamed", {
+                            name: type.display_name,
+                          })}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -403,21 +461,28 @@ export default function ServerTypesPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl bg-[var(--bg-card)] border-[var(--border-color)]">
+        <DialogContent className="management-dialog max-w-2xl bg-[var(--bg-card)] border-[var(--border-color)]">
           <DialogHeader>
             <DialogTitle className="text-[var(--text-primary)]">
-              {editingType ? "Server Turini Tahrirlash" : "Yangi Server Turi"}
+              {editingType ? "Server Turini Tahrirlash" : t("new_server_type")}
             </DialogTitle>
             <DialogDescription>
-              Server turi uchun install va run commandlarni sozlang
+              {t(
+                "configure_installation_and_launch_commands_for_this_server_type",
+              )}
             </DialogDescription>
           </DialogHeader>
+          {actionError && (
+            <p role="alert" className="text-destructive">
+              {actionError}
+            </p>
+          )}
 
           <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto">
             {!editingType && (
               <div className="space-y-2">
                 <Label className="text-[var(--text-primary)]">
-                  Server Turi
+                  {t("server_type")}
                 </Label>
                 <div className="grid grid-cols-4 gap-2">
                   {SERVER_TYPE_PRESETS.map((preset) => (
@@ -439,9 +504,10 @@ export default function ServerTypesPage() {
                     </Button>
                   ))}
                 </div>
-                {formData.server_type === "custom" && (
+                {customType && (
                   <Input
-                    placeholder="Custom tur nomi (masalan: mohist)"
+                    placeholder={t("custom_type_identifier_for_example_mohist")}
+                    aria-label={t("custom_type_identifier_for_example_mohist")}
                     value={
                       formData.server_type === "custom"
                         ? ""
@@ -460,10 +526,14 @@ export default function ServerTypesPage() {
             )}
 
             <div className="space-y-2">
-              <Label className="text-[var(--text-primary)]">
-                Ko'rsatiladigan nom
+              <Label
+                htmlFor="server-types-field-1"
+                className="text-[var(--text-primary)]"
+              >
+                {t("display_name")}
               </Label>
               <Input
+                id="server-types-field-1"
                 value={formData.display_name}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -472,14 +542,21 @@ export default function ServerTypesPage() {
                   }))
                 }
                 placeholder="Paper"
+                aria-label="Paper"
                 className="bg-[var(--bg-dark)] border-[var(--border-color)]"
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label className="text-[var(--text-primary)]">Tavsif</Label>
+              <Label
+                htmlFor="server-types-field-2"
+                className="text-[var(--text-primary)]"
+              >
+                {t("description")}
+              </Label>
               <Textarea
+                id="server-types-field-2"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -487,7 +564,7 @@ export default function ServerTypesPage() {
                     description: e.target.value,
                   }))
                 }
-                placeholder="Paper - yuqori performance Minecraft serveri"
+                placeholder={t("paper_a_high_performance_minecraft_server")}
                 className="bg-[var(--bg-dark)] border-[var(--border-color)]"
                 rows={2}
               />
@@ -495,10 +572,14 @@ export default function ServerTypesPage() {
 
             {/* JAR File Name */}
             <div className="space-y-2">
-              <Label className="text-[var(--text-primary)]">
-                JAR fayl nomi
+              <Label
+                htmlFor="server-types-field-3"
+                className="text-[var(--text-primary)]"
+              >
+                {t("jar_filename")}
               </Label>
               <Input
+                id="server-types-field-3"
                 value={formData.jar_file_name}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -507,10 +588,11 @@ export default function ServerTypesPage() {
                   }))
                 }
                 placeholder="server.jar"
+                aria-label="server.jar"
                 className="bg-[var(--bg-dark)] border-[var(--border-color)] font-mono"
               />
               <p className="text-xs text-[var(--text-secondary)]">
-                Server papkasida JAR fayl qanday nomda saqlanadi
+                {t("the_filename_used_inside_the_server_directory")}
               </p>
             </div>
 
@@ -518,10 +600,12 @@ export default function ServerTypesPage() {
             <div className="flex items-center justify-between p-4 rounded-lg bg-[var(--bg-dark)] border border-[var(--border-color)]">
               <div className="space-y-1">
                 <Label className="text-[var(--text-primary)]">
-                  Installer turi
+                  {t("requires_installation")}
                 </Label>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Forge, NeoForge kabi avval install qilinadigan turlar uchun
+                  {t(
+                    "for_software_such_as_forge_or_neoforge_that_requires_installation",
+                  )}
                 </p>
               </div>
               <Switch
@@ -535,11 +619,15 @@ export default function ServerTypesPage() {
             {/* Install Command (only if installer) */}
             {formData.is_installer && (
               <div className="space-y-2">
-                <Label className="text-[var(--text-primary)] flex items-center gap-2">
+                <Label
+                  htmlFor="server-types-field-4"
+                  className="text-[var(--text-primary)] flex items-center gap-2"
+                >
                   <Download className="w-4 h-4" />
-                  Install Command
+                  {t("installation_command")}
                 </Label>
                 <Textarea
+                  id="server-types-field-4"
                   value={formData.install_command}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -551,22 +639,26 @@ export default function ServerTypesPage() {
                   className="bg-[var(--bg-dark)] border-[var(--border-color)] font-mono text-sm"
                   rows={2}
                 />
-                <div className="flex items-start gap-2 p-3 rounded bg-blue-500/10 border border-blue-500/20">
-                  <Info className="w-4 h-4 text-blue-400 mt-0.5" />
-                  <p className="text-xs text-blue-400">
-                    Mavjud o'zgaruvchilar: {"{java}"}, {"{min_ram}"},{" "}
-                    {"{max_ram}"}, {"{jar_file}"}
+                <div className="flex items-start gap-2 p-3 rounded bg-primary/10 border border-primary/20">
+                  <Info className="w-4 h-4 text-primary mt-0.5" />
+                  <p className="text-xs text-primary">
+                    {t("available_variables")}
+                    {"{java}"}, {"{min_ram}"}, {"{max_ram}"}, {"{jar_file}"}
                   </p>
                 </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <Label className="text-[var(--text-primary)] flex items-center gap-2">
+              <Label
+                htmlFor="server-types-field-5"
+                className="text-[var(--text-primary)] flex items-center gap-2"
+              >
                 <Terminal className="w-4 h-4" />
-                Run Command
+                {t("launch_command")}
               </Label>
               <Textarea
+                id="server-types-field-5"
                 value={formData.run_command}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -578,11 +670,11 @@ export default function ServerTypesPage() {
                 className="bg-[var(--bg-dark)] border-[var(--border-color)] font-mono text-sm"
                 rows={2}
               />
-              <div className="flex items-start gap-2 p-3 rounded bg-blue-500/10 border border-blue-500/20">
-                <Info className="w-4 h-4 text-blue-400 mt-0.5" />
-                <p className="text-xs text-blue-400">
-                  Mavjud o'zgaruvchilar: {"{java}"}, {"{min_ram}"},{" "}
-                  {"{max_ram}"}, {"{jar_file}"}
+              <div className="flex items-start gap-2 p-3 rounded bg-primary/10 border border-primary/20">
+                <Info className="w-4 h-4 text-primary mt-0.5" />
+                <p className="text-xs text-primary">
+                  {t("available_variables")}
+                  {"{java}"}, {"{min_ram}"}, {"{max_ram}"}, {"{jar_file}"}
                 </p>
               </div>
             </div>
@@ -592,10 +684,10 @@ export default function ServerTypesPage() {
               <div className="space-y-1">
                 <Label className="text-[var(--text-primary)] flex items-center gap-2">
                   <FileCode className="w-4 h-4" />
-                  Args fayl ishlatiladi
+                  {t("uses_an_arguments_file")}
                 </Label>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Forge/NeoForge uchun @libraries/.../unix_args.txt
+                  {t("for_forge_neoforge_libraries_unix_args_txt")}
                 </p>
               </div>
               <Switch
@@ -612,10 +704,14 @@ export default function ServerTypesPage() {
             {/* Args File Pattern */}
             {formData.requires_args_file && (
               <div className="space-y-2">
-                <Label className="text-[var(--text-primary)]">
-                  Args fayl pattern
+                <Label
+                  htmlFor="server-types-field-6"
+                  className="text-[var(--text-primary)]"
+                >
+                  {t("arguments_file_pattern")}
                 </Label>
                 <Input
+                  id="server-types-field-6"
                   value={formData.args_file_pattern}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -624,10 +720,11 @@ export default function ServerTypesPage() {
                     }))
                   }
                   placeholder="libraries/net/minecraftforge/forge/*/unix_args.txt"
+                  aria-label="libraries/net/minecraftforge/forge/*/unix_args.txt"
                   className="bg-[var(--bg-dark)] border-[var(--border-color)] font-mono text-sm"
                 />
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Glob pattern - * versiya uchun wildcard sifatida ishlatiladi
+                  {t("glob_pattern_use_as_a_version_wildcard")}
                 </p>
               </div>
             )}
@@ -639,7 +736,7 @@ export default function ServerTypesPage() {
               onClick={() => setDialogOpen(false)}
               className="border-[var(--border-color)]"
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleSave}
@@ -649,7 +746,7 @@ export default function ServerTypesPage() {
               className="bg-[var(--primary)]"
             >
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {editingType ? "Saqlash" : "Yaratish"}
+              {editingType ? t("save") : t("create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -657,14 +754,14 @@ export default function ServerTypesPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="bg-[var(--bg-card)] border-[var(--border-color)]">
+        <DialogContent className="management-dialog bg-[var(--bg-card)] border-[var(--border-color)]">
           <DialogHeader>
             <DialogTitle className="text-[var(--text-primary)]">
-              Server turini o'chirish
+              {t("delete_server_type")}
             </DialogTitle>
             <DialogDescription>
-              "{deletingType?.display_name}" server turini o'chirmoqchimisiz? Bu
-              amalni qaytarib bo'lmaydi.
+              "{deletingType?.display_name}
+              {t("server_type_this_action_cannot_be_undone")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -673,7 +770,7 @@ export default function ServerTypesPage() {
               onClick={() => setDeleteDialogOpen(false)}
               className="border-[var(--border-color)]"
             >
-              Bekor qilish
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -681,7 +778,7 @@ export default function ServerTypesPage() {
               disabled={saving}
             >
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              O'chirish
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

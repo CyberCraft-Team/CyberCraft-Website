@@ -1,10 +1,11 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Chakra_Petch, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { MobileNavigation } from "@/components/mobile-navigation";
 import { AuthProvider } from "@/lib/auth-context";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ExtensionAttributeGuard } from "@/components/extension-attribute-guard";
@@ -43,6 +44,12 @@ const jbMono = JetBrains_Mono({
   subsets: ["latin", "cyrillic"],
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 // uz, ru and en are all rendered at build time.
 export function generateStaticParams() {
@@ -106,7 +113,10 @@ export default async function LocaleLayout({
           <GoogleOAuthProvider
             clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
           >
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              {children}
+              <MobileNavigation />
+            </AuthProvider>
             {/* Without this every toast() call was a silent no-op: the profile
                 page raised them for skin uploads, cape uploads, bonus claims
                 and referral copies, and none of them ever appeared. */}

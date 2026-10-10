@@ -1,5 +1,7 @@
 "use client";
 
+import "@/components/dashboard/management.css";
+
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -14,7 +16,7 @@ import {
   Boxes,
   ShieldAlert,
   Settings2,
-  Menu,
+  Ellipsis,
   X,
 } from "lucide-react";
 import {
@@ -112,6 +114,8 @@ function DashboardNavigation({ onNavigate }: { onNavigate?: () => void }) {
 
 function DashboardContent({ children }: { children: ReactNode }) {
   const t = useTranslations("dashboard");
+  const n = useTranslations("nav");
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isLoading, isAuthenticated, isAdmin, logout } = useAdminAuthContext();
@@ -123,6 +127,17 @@ function DashboardContent({ children }: { children: ReactNode }) {
     if (mounted && !isLoading && !isAuthenticated)
       router.replace("/admin-login");
   }, [mounted, isLoading, isAuthenticated, router]);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const close = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener("change", close);
+    return () => desktop.removeEventListener("change", close);
+  }, []);
   if (!mounted || isLoading)
     return (
       <div
@@ -158,40 +173,10 @@ function DashboardContent({ children }: { children: ReactNode }) {
       </aside>
       <div className="min-w-0 lg:pl-60">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:hidden">
-          <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-11"
-                aria-label={t("openMenu")}
-              >
-                <Menu className="size-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent
-              showCloseButton={false}
-              className="top-0 left-0 flex h-dvh w-[min(20rem,85vw)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-y-0 border-l-0 bg-sidebar p-0 sm:max-w-none"
-            >
-              <DialogTitle className="sr-only">{t("navigation")}</DialogTitle>
-              <DialogDescription className="sr-only">
-                {t("adminPanel")}
-              </DialogDescription>
-              <DialogClose asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("closeMenu")}
-                  className="absolute top-2 right-2 size-11"
-                >
-                  <X className="size-5" />
-                </Button>
-              </DialogClose>
-              <DashboardNavigation onNavigate={() => setMenuOpen(false)} />
-            </DialogContent>
-          </Dialog>
           <span className="text-sm font-semibold">
-            CyberCraft{" "}
+            <Link href="/" className="text-primary">
+              CyberCraft
+            </Link>{" "}
             <span className="text-muted-foreground">/ {t("adminPanel")}</span>
           </span>
         </header>
@@ -203,6 +188,74 @@ function DashboardContent({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+      <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+        <nav
+          data-mobile-bottom-navigation="lg"
+          aria-label={t("navigation")}
+          className="mobile-bottom-navigation lg:hidden"
+        >
+          <div className="grid grid-cols-5">
+            {sidebarLinks
+              .filter((link) =>
+                ["overview", "minecraft", "publicServers", "users"].includes(
+                  link.label,
+                ),
+              )
+              .map(({ href, icon: Icon, label }) => {
+                const active =
+                  pathname === href ||
+                  (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    aria-label={t(label)}
+                    className={`mobile-bottom-item ${active ? "mobile-bottom-item-active" : ""}`}
+                  >
+                    <Icon aria-hidden="true" className="size-5" />
+                    <span className="max-w-full truncate">
+                      {label === "minecraft"
+                        ? "Minecraft"
+                        : label === "publicServers"
+                          ? n("servers")
+                          : t(label === "users" ? "usersShort" : label)}
+                    </span>
+                  </Link>
+                );
+              })}
+            <DialogTrigger asChild>
+              <button
+                aria-label={t("openMenu")}
+                className={`mobile-bottom-item ${menuOpen || pathname.startsWith("/dashboard/news") || pathname.startsWith("/dashboard/server-types") ? "mobile-bottom-item-active" : ""}`}
+              >
+                <Ellipsis aria-hidden="true" className="size-5" />
+                <span>{n("more")}</span>
+              </button>
+            </DialogTrigger>
+          </div>
+        </nav>
+        <DialogContent
+          showCloseButton={false}
+          className="mobile-navigation-sheet translate-x-0 translate-y-0 h-[85dvh] lg:hidden"
+        >
+          <DialogTitle className="sr-only">{t("navigation")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("adminPanel")}
+          </DialogDescription>
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("closeMenu")}
+              className="absolute top-2 right-2 size-11"
+            >
+              <X className="size-5" />
+            </Button>
+          </DialogClose>
+          <DashboardNavigation onNavigate={() => setMenuOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
