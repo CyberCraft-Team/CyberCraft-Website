@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import {
@@ -69,6 +69,11 @@ export default function MinecraftServersPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("create") === "1") {
+      setIsCreateOpen(true);
+    }
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
